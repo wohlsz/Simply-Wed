@@ -1,0 +1,11 @@
+/* Global styles */
+:root {
+    --wedding-gold: #C5A059;
+    --wedding-nude: #FAF9F6;
+}
+
+body {
+    background-color: var(--wedding-nude);
+    color: #1e293b;
+    /* slate-800 */
+}
