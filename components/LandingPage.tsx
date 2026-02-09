@@ -101,7 +101,7 @@ const LandingPage: React.FC = () => {
           <Heart className="text-wedding-gold fill-wedding-gold" size={16} />
           <span className="font-serif font-bold text-slate-800">Simply Wed</span>
         </div>
-        &copy; 2024 Simply Wed Planner - Criado com amor para o seu grande dia.
+        &copy; 2026 Simply Wed - Criado com amor para o seu grande dia.
       </footer>
 
       <style>{`
