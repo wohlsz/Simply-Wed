@@ -14,6 +14,7 @@ import MusicPlanner from './components/MusicPlanner';
 import LoginPage from './components/LoginPage';
 import { useAuth } from './context/AuthContext';
 import { DEFAULT_WEDDING_DATA } from './constants';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const App: React.FC = () => {
   const { weddingData, setWeddingData, loadingData } = useWedding();
