@@ -150,29 +150,29 @@ const LandingPage: React.FC = () => {
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fadeIn"
             onClick={() => setShowDemoModal(false)}
           />
-          <div className="relative bg-white rounded-[2.5rem] p-10 md:p-12 w-full max-w-xl shadow-2xl border border-white animate-scaleIn">
-            <div className="flex flex-col items-center text-center space-y-8">
-              <div className="w-20 h-20 bg-wedding-gold/10 rounded-full flex items-center justify-center mb-2">
-                <Heart className="text-wedding-gold fill-wedding-gold" size={40} />
+          <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 w-full max-w-xl shadow-2xl border border-white animate-scaleIn mx-auto overflow-hidden">
+            <div className="flex flex-col items-center text-center space-y-6 md:space-y-8">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-wedding-gold/10 rounded-full flex items-center justify-center mb-0 md:mb-2">
+                <Heart className="text-wedding-gold fill-wedding-gold" size={32} md:size={40} />
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-3xl font-serif font-bold text-slate-800 whitespace-nowrap">Seja bem-vindo(a) ao Simples Wed!</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">
+              <div className="space-y-3 md:space-y-4 w-full">
+                <h3 className="text-xl md:text-2xl font-serif font-bold text-slate-800 leading-tight">Seja bem-vindo(a) ao Simples Wed!</h3>
+                <p className="text-slate-500 text-sm md:text-base leading-relaxed">
                   Esta é uma <span className="text-wedding-gold font-bold">versão de testes exclusiva</span> da nossa plataforma.
                 </p>
-                <div className="bg-slate-50 p-6 rounded-2xl text-slate-600 text-base border border-slate-100 text-left">
-                  Sinta-se à vontade para explorar todas as funcionalidades! Seu feedback é fundamental para criarmos a melhor experiência possível.
+                <div className="bg-slate-50 p-4 md:p-6 rounded-2xl text-slate-600 text-sm md:text-base border border-slate-100 text-center">
+                  Sinta-se à vontade para explorar todas as funcionalidades! Seu feedback é fundamental.
                   <br /><br />
-                  <p className="font-bold text-slate-800 text-sm">
-                    Para dar o feedback clique no botão disponível abaixo ou mande mensagem no WhatsApp:
+                  <p className="font-bold text-slate-800 text-[10px] md:text-xs">
+                    Para dar o feedback clique no botão abaixo ou mande mensagem no WhatsApp:
                   </p>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-                    <p className="font-bold flex items-center gap-2 text-slate-800 whitespace-nowrap">
-                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <div className="flex flex-col items-center gap-1 mt-3">
+                    <p className="font-bold flex items-center gap-2 text-slate-800 text-xs">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                       WhatsApp:
                     </p>
-                    <span className="text-wedding-gold font-bold whitespace-nowrap">(81) 9.9984-0647</span>
+                    <span className="text-wedding-gold font-bold text-sm md:text-base tracking-wide">(81) 9.9984-0647</span>
                   </div>
                 </div>
               </div>
