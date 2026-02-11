@@ -6,7 +6,7 @@ import { DollarSign, Plus, Wallet, ArrowDownRight, Trash2, PieChart, X, Check, E
 import clsx from 'clsx';
 
 const BudgetTracker: React.FC = () => {
-  const { weddingData, updateBudget, setWeddingData } = useWedding();
+  const { weddingData, updateBudget, addBudgetItem, removeBudgetItem, setWeddingData } = useWedding();
   const budgetItems = weddingData.budgetItems;
   const totalBudget = weddingData.budget;
 
@@ -23,7 +23,7 @@ const BudgetTracker: React.FC = () => {
   const remaining = totalBudget - totalSpent;
   const usagePercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
 
-  const addItem = () => {
+  const addItem = async () => {
     if (!newItemCategory.trim()) return;
     const newItem: BudgetItem = {
       id: Date.now().toString(),
@@ -31,11 +31,7 @@ const BudgetTracker: React.FC = () => {
       planned: 0,
       spent: 0
     };
-    // Adiciona no início da lista via setWeddingData
-    setWeddingData(prev => ({
-      ...prev,
-      budgetItems: [newItem, ...prev.budgetItems]
-    }));
+    await addBudgetItem(newItem);
     setIsAdding(false);
     setNewItemCategory('');
   };
@@ -44,11 +40,8 @@ const BudgetTracker: React.FC = () => {
     updateBudget(id, { spent: value });
   };
 
-  const performDelete = (id: string) => {
-    setWeddingData(prev => ({
-      ...prev,
-      budgetItems: prev.budgetItems.filter(item => item.id !== id)
-    }));
+  const performDelete = async (id: string) => {
+    await removeBudgetItem(id);
     setConfirmDeleteId(null);
   };
 

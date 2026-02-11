@@ -176,16 +176,34 @@ const GuestList: React.FC = () => {
           <h1 className="text-4xl font-serif font-bold text-slate-800">Convidados</h1>
           <p className="text-slate-500 mt-1">Gerencie sua lista completa e destaque seus padrinhos.</p>
         </div>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className={clsx(
-            "px-8 py-3 rounded-2xl shadow-lg transition-all font-bold flex items-center gap-2 border-[0.5px] border-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98]",
-            showAddForm ? 'bg-slate-800 text-white' : 'bg-wedding-gold text-white'
-          )}
-        >
-          {showAddForm ? <X size={20} /> : <UserPlus size={20} />}
-          {showAddForm ? 'Fechar Painel' : 'Novo Convidado'}
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Meta de Convidados</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-serif font-bold text-slate-800">{weddingData.guestCount}</span>
+              <button
+                onClick={() => {
+                  setEditedGoal(weddingData.guestCount);
+                  setIsEditingGoal(true);
+                }}
+                className="p-2 text-slate-400 hover:text-wedding-gold hover:bg-wedding-gold/5 rounded-xl transition-all shadow-sm bg-white border border-slate-100"
+                title="Editar meta de convidados"
+              >
+                <Edit2 size={16} />
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className={clsx(
+              "px-8 py-3 rounded-2xl shadow-lg transition-all font-bold flex items-center gap-2 border-[0.5px] border-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98]",
+              showAddForm ? 'bg-slate-800 text-white' : 'bg-wedding-gold text-white'
+            )}
+          >
+            {showAddForm ? <X size={20} /> : <UserPlus size={20} />}
+            {showAddForm ? 'Fechar Painel' : 'Novo Convidado'}
+          </button>
+        </div>
       </header>
 
       {/* Filtros e Stats */}
@@ -193,80 +211,60 @@ const GuestList: React.FC = () => {
         <button
           onClick={() => setActiveFilter('all')}
           className={clsx(
-            "px-6 py-3 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm relative group",
+            "px-6 py-4 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
             activeFilter === 'all'
               ? 'bg-wedding-gold text-white border-wedding-gold shadow-lg shadow-wedding-gold/20'
-              : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'
-          )}
-        >
-          <div className="flex items-center gap-3 flex-1">
-            <Users size={18} />
-            <span className="text-lg leading-none">{stats.total}</span>
-            <span className="text-[10px] uppercase tracking-[0.15em]">Total</span>
-          </div>
-
-          <div className={clsx("h-4 w-[1px]", activeFilter === 'all' ? "bg-white/30" : "bg-slate-100")} />
-
-          <div className="flex items-center gap-2">
-            <span className={clsx("text-[10px] uppercase tracking-[0.15em]", activeFilter === 'all' ? "text-white/80" : "text-slate-300")}>Meta: {weddingData.guestCount}</span>
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditedGoal(weddingData.guestCount);
-                setIsEditingGoal(true);
-              }}
-              className={clsx(
-                "p-1 rounded-md transition-all sm:opacity-0 group-hover:opacity-100",
-                activeFilter === 'all' ? "text-white hover:bg-white/20" : "text-slate-200 hover:text-wedding-gold hover:bg-wedding-gold/5"
-              )}
-              title="Editar meta de convidados"
-            >
-              <Edit2 size={14} />
-            </div>
-          </div>
-        </button>
-
-        <button
-          onClick={() => setActiveFilter('bride')}
-          className={clsx(
-            "px-6 py-3 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
-            activeFilter === 'bride'
-              ? 'bg-pink-500 text-white border-pink-400 shadow-lg shadow-pink-200'
-              : 'bg-white border-slate-100 text-slate-400 hover:border-pink-300'
-          )}
-        >
-          <Heart size={18} className={activeFilter === 'bride' ? 'fill-white' : ''} />
-          <span className="text-lg leading-none">{stats.bride}</span>
-          <span className="text-[10px] uppercase tracking-[0.15em]">Noiva</span>
-        </button>
-
-        <button
-          onClick={() => setActiveFilter('groom')}
-          className={clsx(
-            "px-6 py-3 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
-            activeFilter === 'groom'
-              ? 'bg-blue-500 text-white border-blue-400 shadow-lg shadow-blue-200'
-              : 'bg-white border-slate-100 text-slate-400 hover:border-blue-300'
-          )}
-        >
-          <Heart size={18} className={activeFilter === 'groom' ? 'fill-white' : ''} />
-          <span className="text-lg leading-none">{stats.groom}</span>
-          <span className="text-[10px] uppercase tracking-[0.15em]">Noivo</span>
-        </button>
-
-        <button
-          onClick={() => setActiveFilter('godparents')}
-          className={clsx(
-            "px-6 py-3 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
-            activeFilter === 'godparents'
-              ? 'bg-slate-800 text-white border-slate-700 shadow-lg shadow-slate-200'
               : 'bg-white border-slate-100 text-slate-400 hover:border-wedding-gold/30'
           )}
         >
-          <Star size={18} className={activeFilter === 'godparents' ? 'fill-white' : ''} />
-          <span className="text-lg leading-none">{stats.godparents}</span>
-          <span className="text-[10px] uppercase tracking-[0.15em]">Padrinhos</span>
+          <Users size={18} className={activeFilter === 'all' ? 'fill-white' : 'text-wedding-gold'} />
+          <span className="text-lg leading-none">{stats.total}</span>
+          <span className="text-[10px] uppercase tracking-[0.15em]">Total</span>
         </button>
+
+        <div className="col-span-1 sm:col-span-1 lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <button
+            onClick={() => setActiveFilter('bride')}
+            className={clsx(
+              "px-6 py-4 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
+              activeFilter === 'bride'
+                ? 'bg-pink-500 text-white border-pink-400 shadow-lg shadow-pink-200'
+                : 'bg-white border-slate-100 text-slate-400 hover:border-pink-300'
+            )}
+          >
+            <Heart size={18} className={activeFilter === 'bride' ? 'fill-white' : ''} />
+            <span className="text-lg leading-none">{stats.bride}</span>
+            <span className="text-[10px] uppercase tracking-[0.15em]">Noiva</span>
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('groom')}
+            className={clsx(
+              "px-6 py-4 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
+              activeFilter === 'groom'
+                ? 'bg-blue-500 text-white border-blue-400 shadow-lg shadow-blue-200'
+                : 'bg-white border-slate-100 text-slate-400 hover:border-blue-300'
+            )}
+          >
+            <Heart size={18} className={activeFilter === 'groom' ? 'fill-white' : ''} />
+            <span className="text-lg leading-none">{stats.groom}</span>
+            <span className="text-[10px] uppercase tracking-[0.15em]">Noivo</span>
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('godparents')}
+            className={clsx(
+              "px-6 py-4 rounded-2xl border-[0.5px] transition-all flex items-center justify-center gap-3 font-bold shadow-sm",
+              activeFilter === 'godparents'
+                ? 'bg-slate-800 text-white border-slate-700 shadow-lg shadow-slate-200'
+                : 'bg-white border-slate-100 text-slate-400 hover:border-wedding-gold/30'
+            )}
+          >
+            <Star size={18} className={activeFilter === 'godparents' ? 'fill-white' : ''} />
+            <span className="text-lg leading-none">{stats.godparents}</span>
+            <span className="text-[10px] uppercase tracking-[0.15em]">Padrinhos</span>
+          </button>
+        </div>
       </div>
 
       {/* Seção de Padrinhos em Destaque */}

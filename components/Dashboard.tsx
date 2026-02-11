@@ -9,7 +9,8 @@ import {
   Clock,
   Edit2,
   X,
-  Save
+  Save,
+  Heart
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { StatCard } from './ui/StatCard';
@@ -83,67 +84,76 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between w-full gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-serif font-bold text-slate-800">Olá, {data.coupleName || 'Noivos'}!</h1>
+      <header className="relative bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-wedding-gold/5 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-wedding-gold/10 transition-colors duration-700" />
+
+        <div className="relative flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-center md:text-left space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-wedding-gold/10 text-wedding-gold rounded-full text-[9px] font-bold uppercase tracking-[0.2em]">
+              <Heart size={10} className="fill-wedding-gold" />
+              Sua Jornada até o Sim
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-4">
+              <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-800 leading-tight">
+                Olá, {data.coupleName || 'Noivos'}!
+              </h1>
               <button
                 onClick={handleOpenNameEdit}
-                className="p-2 text-slate-400 hover:text-wedding-gold hover:bg-wedding-gold/5 rounded-full transition-colors"
-                title="Editar nome do casal"
+                className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-wedding-gold hover:bg-wedding-gold/10 transition-all opacity-0 group-hover:opacity-100"
               >
-                <Edit2 size={20} />
+                <Edit2 size={18} />
               </button>
             </div>
-            <p className="text-slate-500 mt-1">Seu planejamento está {progressPercent}% concluído.</p>
+            <p className="text-slate-500 text-sm max-w-md">
+              Faltam <span className="text-wedding-gold font-bold">{daysLeft} dias</span> para o seu dia. Planejamento {progressPercent}% pronto.
+            </p>
           </div>
-          <button
-            onClick={handleOpenDateEdit}
-            className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 hover:border-wedding-gold/30 hover:bg-slate-50 transition-all group"
-            title="Clique para editar a data do casamento"
-          >
-            <Calendar className="text-wedding-gold group-hover:scale-110 transition-transform" size={20} />
-            <div className="flex flex-col items-start">
-              <span className="font-bold text-slate-700 leading-none">
-                {data.weddingDate
-                  ? (showFullDate
-                    ? new Date(data.weddingDate).toLocaleDateString('pt-BR')
-                    : (daysLeft > 0 ? `${daysLeft} dias restantes` : 'É hoje! 🎉'))
-                  : 'Defina a data'}
-              </span>
-              <span className="text-[8px] uppercase tracking-widest text-slate-300 font-bold mt-1 group-hover:text-wedding-gold transition-colors">Clique para alterar</span>
+
+          <div className="flex flex-col items-center justify-center p-6 bg-wedding-nude/50 rounded-[2rem] border border-white shadow-inner min-w-[160px] hover:scale-105 transition-transform cursor-pointer" onClick={handleOpenDateEdit}>
+            <div className="text-4xl font-serif font-bold text-wedding-gold mb-1">{daysLeft}</div>
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Dias Restantes</div>
+            <div className="mt-3 flex items-center gap-2 text-slate-400 hover:text-wedding-gold transition-colors">
+              <Calendar size={12} />
+              <span className="text-[10px] font-bold">{data.weddingDate ? new Date(data.weddingDate).toLocaleDateString('pt-BR') : 'Definir Data'}</span>
             </div>
-          </button>
+          </div>
         </div>
       </header>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          icon={<CheckCircle className="text-green-500" />}
-          label="Checklist"
-          value={`${completedTasks}/${data.tasks.length}`}
-          subtext="Tarefas concluídas"
-        />
-        <StatCard
-          icon={<DollarSign className="text-blue-500" />}
-          label="Orçamento"
-          value={`R$ ${totalSpent.toLocaleString('pt-BR')}`}
-          subtext={`de R$ ${data.budget.toLocaleString('pt-BR')}`}
-        />
-        <StatCard
-          icon={<Users className="text-purple-500" />}
-          label="Convidados"
-          value={data.guestCount.toString()}
-          subtext={`Confirmados: ${data.guests.filter(g => g.rsvpStatus === 'confirmed').length}`}
-        />
-        <StatCard
-          icon={<Clock className="text-orange-500" />}
-          label="Próximo Prazo"
-          value="Contrato Local" // TODO: Implement logic to find next deadline
-          subtext="Em 3 dias"
-        />
+        <NavLink to="/dashboard/checklist" className="block outline-none focus:ring-2 focus:ring-wedding-gold rounded-3xl transition-transform hover:scale-[1.02] active:scale-[0.98]">
+          <StatCard
+            icon={<CheckCircle className="text-green-500" />}
+            label="Checklist"
+            value={`${completedTasks}/${data.tasks.length}`}
+            subtext="Tarefas concluídas"
+          />
+        </NavLink>
+        <NavLink to="/dashboard/budget" className="block outline-none focus:ring-2 focus:ring-wedding-gold rounded-3xl transition-transform hover:scale-[1.02] active:scale-[0.98]">
+          <StatCard
+            icon={<DollarSign className="text-blue-500" />}
+            label="Orçamento"
+            value={`R$ ${totalSpent.toLocaleString('pt-BR')}`}
+            subtext={`de R$ ${data.budget.toLocaleString('pt-BR')}`}
+          />
+        </NavLink>
+        <NavLink to="/dashboard/guests" className="block outline-none focus:ring-2 focus:ring-wedding-gold rounded-3xl transition-transform hover:scale-[1.02] active:scale-[0.98]">
+          <StatCard
+            icon={<Users className="text-purple-500" />}
+            label="Convidados"
+            value={data.guestCount.toString()}
+            subtext={`Confirmados: ${data.guests.filter(g => g.rsvpStatus === 'confirmed').length}`}
+          />
+        </NavLink>
+        <div className="block cursor-default">
+          <StatCard
+            icon={<Clock className="text-orange-500" />}
+            label="Próximo Prazo"
+            value="Contrato Local" // TODO: Implement logic to find next deadline
+            subtext="Em 3 dias"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -163,8 +173,7 @@ const Dashboard: React.FC = () => {
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
-                <Bar dataKey="spent" fill="#C5A059" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="planned" fill="#F3F0E9" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="spent" fill="#C5A059" radius={[4, 4, 0, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -197,26 +206,6 @@ const Dashboard: React.FC = () => {
             <p className="text-3xl font-bold text-slate-800">{budgetProgress}%</p>
             <p className="text-sm text-slate-400">do orçamento utilizado</p>
           </div>
-        </div>
-      </div>
-
-      {/* Recent Tasks */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-          <h3 className="text-xl font-serif font-bold text-slate-800">Tarefas Pendentes</h3>
-          <NavLink to="/dashboard/checklist" className="text-wedding-gold text-sm font-bold hover:underline">Ver todas</NavLink>
-        </div>
-        <div className="divide-y divide-slate-50">
-          {data.tasks.filter(t => t.status !== 'completed').slice(0, 4).map(task => (
-            <div key={task.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition">
-              <div className="w-2 h-2 rounded-full bg-wedding-gold" />
-              <div className="flex-1">
-                <p className="text-slate-800 font-medium">{task.title}</p>
-                <p className="text-xs text-slate-400 uppercase tracking-wider">{task.category}</p>
-              </div>
-              <span className="text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded-full">Pendente</span>
-            </div>
-          ))}
         </div>
       </div>
 

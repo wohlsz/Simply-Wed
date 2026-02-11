@@ -19,6 +19,8 @@ interface WeddingContextType {
   updateTask: (taskId: string, updates: Partial<WeddingTask>) => Promise<void>;
   removeTask: (taskId: string) => Promise<void>;
   updateBudget: (budgetId: string, updates: Partial<BudgetItem>) => Promise<void>;
+  addBudgetItem: (item: BudgetItem) => Promise<void>;
+  removeBudgetItem: (budgetId: string) => Promise<void>;
   updateCoupleItems: (items: CoupleItems) => Promise<void>;
   addSong: (song: MusicSong) => Promise<void>;
   removeSong: (songId: string) => Promise<void>;
@@ -299,9 +301,46 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
       budgetItems: prev.budgetItems.map(b => b.id === budgetId ? { ...b, ...updates } : b)
     }));
     if (weddingId) {
-      // To fully implement, we need to know if it's an insert or update. 
-      // For now, let's assume update and suppress error if not found? 
-      // Or better, standard budget items should probably serve as templates.
+      const dbUpdates: any = {};
+      if (updates.category) dbUpdates.category = updates.category;
+      if (updates.planned !== undefined) dbUpdates.planned = updates.planned;
+      if (updates.spent !== undefined) dbUpdates.spent = updates.spent;
+
+      await supabase.from('budget_items').update(dbUpdates).eq('id', budgetId);
+    }
+  };
+
+  const addBudgetItem = async (item: BudgetItem) => {
+    setWeddingData(prev => ({
+      ...prev,
+      budgetItems: [item, ...prev.budgetItems]
+    }));
+
+    if (weddingId) {
+      const { data: newItem } = await supabase.from('budget_items').insert({
+        wedding_id: weddingId,
+        category: item.category,
+        planned: item.planned,
+        spent: item.spent
+      }).select().single();
+
+      if (newItem) {
+        setWeddingData(prev => ({
+          ...prev,
+          budgetItems: prev.budgetItems.map(b => b.id === item.id ? { ...b, id: newItem.id } : b)
+        }));
+      }
+    }
+  };
+
+  const removeBudgetItem = async (budgetId: string) => {
+    setWeddingData(prev => ({
+      ...prev,
+      budgetItems: prev.budgetItems.filter(b => b.id !== budgetId)
+    }));
+
+    if (weddingId) {
+      await supabase.from('budget_items').delete().eq('id', budgetId);
     }
   };
 
@@ -353,6 +392,8 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
       updateTask,
       removeTask,
       updateBudget,
+      addBudgetItem,
+      removeBudgetItem,
       updateCoupleItems,
       addSong,
       removeSong,

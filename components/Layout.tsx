@@ -10,7 +10,8 @@ import {
   LogOut,
   Menu,
   Heart,
-  Music
+  Music,
+  MessageCircle
 } from 'lucide-react';
 
 interface Props {
@@ -55,7 +56,7 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
         <div className="p-8 h-full flex flex-col">
           <NavLink to="/dashboard" className="flex items-center gap-2 mb-12 hover:opacity-80 transition-opacity">
             <Heart className="text-wedding-gold fill-wedding-gold" size={24} />
-            <span className="text-2xl font-serif font-bold text-slate-800">Simply Wed</span>
+            <span className="text-2xl font-serif font-bold text-slate-800">Simples Wed</span>
           </NavLink>
 
           <nav className="flex-1 flex flex-col gap-2 relative">
@@ -114,14 +115,14 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
         <header className="bg-white border-b border-slate-100 p-4 lg:hidden relative flex items-center justify-center min-h-[64px]">
           <div className="flex items-center gap-2">
             <Heart className="text-wedding-gold fill-wedding-gold" size={20} />
-            <span className="text-xl font-serif font-bold text-slate-800">Simply Wed</span>
+            <span className="text-xl font-serif font-bold text-slate-800">Simples Wed</span>
           </div>
           <button onClick={() => setIsSidebarOpen(true)} className="absolute right-4 p-2 text-slate-600 hover:text-wedding-gold transition-colors">
             <Menu size={24} />
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-10">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-10 relative pb-32">
           {children}
         </div>
       </main>

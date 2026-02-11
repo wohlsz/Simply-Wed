@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Loader2 } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,6 +23,13 @@ const LoginPage: React.FC = () => {
             const { error } = await supabase.auth.signUp({
                 email,
                 password,
+                options: {
+                    data: {
+                        first_name: firstName,
+                        last_name: lastName,
+                        full_name: `${firstName} ${lastName}`.trim()
+                    }
+                }
             });
             if (error) {
                 setError(error.message);
@@ -43,16 +52,43 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-wedding-nude flex items-center justify-center p-4">
-            <div className="bg-white p-8 rounded-[2rem] shadow-xl w-full max-w-md border border-white">
+            <div className="bg-white p-8 rounded-[2rem] shadow-xl w-full max-w-md border border-white transition-all duration-500 ease-in-out">
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-16 h-16 bg-wedding-gold/10 rounded-2xl flex items-center justify-center text-wedding-gold mb-4">
                         <Heart size={32} fill="currentColor" />
                     </div>
-                    <h1 className="text-3xl font-serif font-bold text-slate-800">Simply Wed</h1>
-                    <p className="text-slate-400">Planeje seu casamento dos sonhos</p>
+                    <h1 className="text-3xl font-serif font-bold text-slate-800 transition-all duration-500">Simples Wed</h1>
+                    <p className="text-slate-400 transition-all duration-500">{isSignUp ? 'Crie sua conta agora' : 'Planeje seu casamento dos sonhos'}</p>
                 </div>
 
                 <form onSubmit={handleAuth} className="space-y-4">
+                    <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
+                        <div className="overflow-hidden">
+                            <div className="grid grid-cols-2 gap-4 pb-1">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Nome</label>
+                                    <input
+                                        type="text"
+                                        required={isSignUp}
+                                        className="w-full px-5 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-wedding-gold transition-all"
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Sobrenome</label>
+                                    <input
+                                        type="text"
+                                        required={isSignUp}
+                                        className="w-full px-5 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-wedding-gold transition-all"
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Email</label>
                         <input
@@ -94,6 +130,10 @@ const LoginPage: React.FC = () => {
                     </button>
                 </div>
             </div>
+            <style>{`
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+            `}</style>
         </div>
     );
 };

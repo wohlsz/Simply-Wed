@@ -12,6 +12,9 @@ import BudgetTracker from './components/BudgetTracker';
 import CoupleArea from './components/CoupleArea';
 import MusicPlanner from './components/MusicPlanner';
 import LoginPage from './components/LoginPage';
+import FeedbackPage from './components/FeedbackPage';
+import FeedbackFooter from './components/FeedbackFooter';
+import FeedbackAdmin from './components/FeedbackAdmin';
 import { useAuth } from './context/AuthContext';
 import { DEFAULT_WEDDING_DATA } from './constants';
 import { SpeedInsights } from "@vercel/speed-insights/react"
@@ -36,7 +39,8 @@ const App: React.FC = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
-        <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/admin/feedbacks" element={<FeedbackAdmin />} />
 
         {/* Se não estiver logado, redireciona para login ao tentar acessar rotas protegidas */}
         <Route path="/dashboard/*" element={
@@ -80,6 +84,7 @@ const App: React.FC = () => {
         <Route path="/welcome" element={<Navigate to="/" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <FeedbackFooter />
       <SpeedInsights />
     </>
   );
