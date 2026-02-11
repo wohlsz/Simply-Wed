@@ -39,6 +39,7 @@ const App: React.FC = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/admin/feedbacks" element={<FeedbackAdmin />} />
 

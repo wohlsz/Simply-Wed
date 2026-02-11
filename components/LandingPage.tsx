@@ -94,16 +94,20 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start pt-4">
             <button
               onClick={handleStart}
-              className="bg-wedding-gold text-white px-10 py-5 rounded-2xl text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-wedding-gold/30 flex items-center gap-3 justify-center"
+              className="bg-wedding-gold text-white px-10 py-5 rounded-2xl text-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-wedding-gold/30 flex items-center gap-3 justify-center relative z-20"
             >
-              Começar planejamento
-              <ArrowRight size={20} />
+              <span className="flex items-center gap-3 pointer-events-none">
+                Começar planejamento
+                <ArrowRight size={20} />
+              </span>
             </button>
             <button
               onClick={handleStart}
-              className="bg-white border-2 border-slate-100 text-slate-600 px-10 py-5 rounded-2xl text-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-3 justify-center"
+              className="bg-white border-2 border-slate-100 text-slate-600 px-10 py-5 rounded-2xl text-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-3 justify-center relative z-20"
             >
-              Ver demonstração
+              <span className="pointer-events-none">
+                Ver demonstração
+              </span>
             </button>
           </div>
         </div>
@@ -176,22 +180,22 @@ const LandingPage: React.FC = () => {
               <div className="w-full flex flex-col gap-3 pt-4">
                 <button
                   onClick={handleConfirmDemo}
-                  className="w-full bg-wedding-gold text-white px-8 py-5 rounded-2xl font-bold shadow-xl shadow-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg"
+                  className="w-full bg-wedding-gold text-white px-8 py-5 rounded-2xl font-bold shadow-xl shadow-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg relative z-20"
                 >
-                  Explorar Plataforma
+                  <span className="pointer-events-none">Explorar Plataforma</span>
                 </button>
                 <div className="flex gap-3">
                   <button
                     onClick={() => navigate('/feedback')}
-                    className="flex-1 bg-white border-2 border-wedding-gold text-wedding-gold px-8 py-4 rounded-2xl font-bold hover:bg-wedding-gold/5 transition-all"
+                    className="flex-1 bg-white border-2 border-wedding-gold text-wedding-gold px-8 py-4 rounded-2xl font-bold hover:bg-wedding-gold/5 transition-all relative z-20"
                   >
-                    Dar Feedback
+                    <span className="pointer-events-none">Dar Feedback</span>
                   </button>
                   <button
                     onClick={() => setShowDemoModal(false)}
-                    className="flex-1 px-8 py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-50 transition-all"
+                    className="flex-1 px-8 py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-50 transition-all relative z-20"
                   >
-                    Voltar
+                    <span className="pointer-events-none">Voltar</span>
                   </button>
                 </div>
               </div>
