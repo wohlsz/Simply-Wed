@@ -1,43 +1,75 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useWedding } from '../context/WeddingContext';
 import { BudgetItem } from '../types';
-import { DollarSign, Plus, Wallet, ArrowDownRight, Trash2, PieChart, X, Check, Edit2, Save } from 'lucide-react';
+import { DollarSign, Plus, Wallet, ArrowDownRight, Trash2, PieChart, X, Check, Edit2, Save, Tag, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 
+const CATEGORIES = [
+  'Buffet',
+  'Espaço',
+  'Vestimenta',
+  'Decoração',
+  'Fotografia',
+  'Música',
+  'Papelaria',
+  'Lembrancinhas',
+  'Lua de Mel',
+  'Assessoria',
+  'Beleza',
+  'Outros'
+];
+
 const BudgetTracker: React.FC = () => {
-  const { weddingData, updateBudget, addBudgetItem, removeBudgetItem, setWeddingData } = useWedding();
+  const { weddingData, updateBudget, addBudgetItem, removeBudgetItem, updateWedding } = useWedding();
   const budgetItems = weddingData.budgetItems;
   const totalBudget = weddingData.budget;
 
   const [isAdding, setIsAdding] = useState(false);
-  const [newItemCategory, setNewItemCategory] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState(CATEGORIES[0]);
+  const [newItemDescription, setNewItemDescription] = useState('');
+  const [newItemSpent, setNewItemSpent] = useState(0);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [editedBudget, setEditedBudget] = useState(totalBudget);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
 
-  const { updateWedding } = useWedding();
-
   const totalSpent = budgetItems.reduce((acc, curr) => acc + (curr.spent || 0), 0);
   const remaining = totalBudget - totalSpent;
   const usagePercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
 
+  // Currency mask helpers
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
+  const parseCurrency = (value: string): number => {
+    const rawValue = value.replace(/\D/g, '');
+    return Number(rawValue) / 100;
+  };
+
   const addItem = async () => {
-    if (!newItemCategory.trim()) return;
+    if (!newItemDescription.trim()) return;
     const newItem: BudgetItem = {
       id: Date.now().toString(),
-      category: newItemCategory.trim(),
+      category: newItemCategory,
+      description: newItemDescription.trim(),
       planned: 0,
-      spent: 0
+      spent: newItemSpent
     };
     await addBudgetItem(newItem);
     setIsAdding(false);
-    setNewItemCategory('');
+    setNewItemDescription('');
+    setNewItemCategory(CATEGORIES[0]);
+    setNewItemSpent(0);
   };
 
-  const updateSpent = (id: string, value: number) => {
-    updateBudget(id, { spent: value });
+  const updateSpentValue = (id: string, displayValue: string) => {
+    const numericValue = parseCurrency(displayValue);
+    updateBudget(id, { spent: numericValue });
   };
 
   const performDelete = async (id: string) => {
@@ -124,37 +156,68 @@ const BudgetTracker: React.FC = () => {
       {isAdding && (
         <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-wedding-gold/10 animate-fadeIn ring-4 ring-wedding-nude">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-serif font-bold text-slate-800">Nova Categoria de Gasto</h3>
+            <h3 className="text-2xl font-serif font-bold text-slate-800">De onde é esse gasto?</h3>
             <button onClick={() => setIsAdding(false)} className="text-slate-300 hover:text-slate-500 transition">
               <Plus size={24} className="rotate-45" />
             </button>
           </div>
-          <div className="flex flex-col md:flex-row gap-4">
-            <input
-              autoFocus
-              className="flex-1 px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-wedding-gold focus:bg-white transition-all text-lg"
-              placeholder="Ex: Aluguel do Espaço, Buffet, Vestido..."
-              value={newItemCategory}
-              onChange={(e) => setNewItemCategory(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addItem()}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">O que é?</label>
+              <input
+                autoFocus
+                className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-wedding-gold focus:bg-white transition-all text-lg"
+                placeholder="Ex: Aluguel Terno..."
+                value={newItemDescription}
+                onChange={(e) => setNewItemDescription(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Categoria</label>
+              <div className="relative">
+                <select
+                  className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-wedding-gold focus:bg-white transition-all text-lg appearance-none pr-12 cursor-pointer"
+                  value={newItemCategory}
+                  onChange={(e) => setNewItemCategory(e.target.value)}
+                >
+                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+                <ChevronDown size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Valor (R$)</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">R$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:ring-2 focus:ring-wedding-gold focus:bg-white transition-all text-lg font-bold"
+                  value={formatCurrency(newItemSpent)}
+                  onChange={(e) => setNewItemSpent(parseCurrency(e.target.value))}
+                  onKeyDown={(e) => e.key === 'Enter' && addItem()}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end mt-6">
             <button
               onClick={addItem}
-              className="bg-wedding-gold text-white px-10 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
+              className="bg-wedding-gold text-white px-10 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all w-full md:w-auto"
             >
-              Criar Categoria
+              Lançar Gasto
             </button>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
-              <th className="p-8 font-bold">Serviço / Categoria</th>
+              <th className="p-8 font-bold">Serviço / Item</th>
+              <th className="p-8 font-bold">Categoria</th>
               <th className="p-8 font-bold text-center">Valor Gasto (R$)</th>
-              <th className="p-8 font-bold text-right">Status</th>
               <th className="p-8 font-bold text-center">Ações</th>
             </tr>
           </thead>
@@ -162,26 +225,25 @@ const BudgetTracker: React.FC = () => {
             {budgetItems.length > 0 ? budgetItems.map(item => (
               <tr key={item.id} className="hover:bg-wedding-nude/30 transition-colors group">
                 <td className="p-8">
-                  <p className="font-bold text-slate-800 text-lg">{item.category}</p>
+                  <p className="font-bold text-slate-800 text-lg">{item.description || item.category}</p>
+                </td>
+                <td className="p-8">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    <Tag size={12} />
+                    {item.category}
+                  </div>
                 </td>
                 <td className="p-8">
                   <div className="relative max-w-[200px] mx-auto">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">R$</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-transparent rounded-xl text-lg font-bold text-slate-700 focus:bg-white focus:border-wedding-gold outline-none transition-all"
-                      value={item.spent || ''}
-                      placeholder="0,00"
-                      onChange={(e) => updateSpent(item.id, Number(e.target.value))}
+                      value={formatCurrency(item.spent || 0)}
+                      onChange={(e) => updateSpentValue(item.id, e.target.value)}
                     />
                   </div>
-                </td>
-                <td className="p-8 text-right">
-                  {item.spent > 0 ? (
-                    <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Lançado</span>
-                  ) : (
-                    <span className="bg-slate-100 text-slate-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">A pagar</span>
-                  )}
                 </td>
                 <td className="p-8 text-center">
                   <div className="flex justify-center">
@@ -253,12 +315,13 @@ const BudgetTracker: React.FC = () => {
                 <div className="relative">
                   <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-bold text-xl">R$</span>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     required
                     autoFocus
                     className="w-full pl-16 pr-6 py-5 rounded-3xl border border-slate-100 outline-none text-2xl font-bold bg-slate-50 focus:bg-white focus:ring-4 focus:ring-wedding-gold/10 focus:border-wedding-gold/30 transition-all"
-                    value={editedBudget}
-                    onChange={(e) => setEditedBudget(Number(e.target.value))}
+                    value={formatCurrency(editedBudget)}
+                    onChange={(e) => setEditedBudget(parseCurrency(e.target.value))}
                   />
                 </div>
               </div>

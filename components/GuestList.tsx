@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useWedding } from '../context/WeddingContext';
 import { Guest } from '../types';
-import { Users, UserPlus, Search, Trash2, CheckCircle, Clock, XCircle, X, Check, Star, Heart, UserCheck, Edit2, Save } from 'lucide-react';
+import { Users, UserPlus, Search, Trash2, CheckCircle, Clock, XCircle, X, Check, Award, Heart, UserCheck, Edit2, Save } from 'lucide-react';
 import clsx from 'clsx';
 
 const GuestList: React.FC = () => {
@@ -22,6 +22,7 @@ const GuestList: React.FC = () => {
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const { updateWedding } = useWedding();
 
@@ -117,12 +118,16 @@ const GuestList: React.FC = () => {
 
   const handleDeleteBulk = async () => {
     if (selectedGuests.length === 0) return;
-    if (!window.confirm(`Deseja realmente excluir ${selectedGuests.length} convidados?`)) return;
+    setShowBulkDeleteConfirm(true);
+  };
 
+  const confirmBulkDelete = async () => {
     setIsDeletingBulk(true);
     try {
       await removeGuests(selectedGuests);
       setSelectedGuests([]);
+      setShowBulkDeleteConfirm(false);
+      setIsSelectionMode(false);
     } catch (error) {
       console.error('Failed to delete guests:', error);
     } finally {
@@ -260,58 +265,13 @@ const GuestList: React.FC = () => {
                 : 'bg-white border-slate-100 text-slate-400 hover:border-wedding-gold/30'
             )}
           >
-            <Star size={18} className={activeFilter === 'godparents' ? 'fill-white' : ''} />
+            <Award size={18} className={activeFilter === 'godparents' ? 'fill-white' : ''} />
             <span className="text-lg leading-none">{stats.godparents}</span>
             <span className="text-[10px] uppercase tracking-[0.15em]">Padrinhos</span>
           </button>
         </div>
       </div>
 
-      {/* Seção de Padrinhos em Destaque */}
-      {activeFilter === 'godparents' && (brideGodparents.length > 0 || groomGodparents.length > 0) && (
-        <div className="space-y-6 animate-fadeIn">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-serif font-bold text-slate-800 flex items-center gap-3">
-              <Star className="text-wedding-gold fill-wedding-gold" size={24} />
-              Nossos Padrinhos & Madrinhas
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-pink-50/50 p-6 rounded-[2.5rem] border-[0.5px] border-pink-200 shadow-sm space-y-4">
-              <h3 className="text-pink-600 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
-                <Heart size={14} className="fill-pink-400 text-pink-400" /> Da Noiva
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {brideGodparents.length > 0 ? brideGodparents.map(gp => (
-                  <div key={gp.id} className="bg-white px-4 py-2 rounded-full border-[0.5px] border-pink-200 shadow-sm flex items-center gap-2">
-                    <Star size={12} className="text-wedding-gold fill-wedding-gold" />
-                    <span className="text-sm font-bold text-slate-700">{gp.name}</span>
-                  </div>
-                )) : (
-                  <p className="text-slate-300 text-xs italic">Nenhum padrinho definido.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-blue-50/50 p-6 rounded-[2.5rem] border-[0.5px] border-blue-200 shadow-sm space-y-4">
-              <h3 className="text-blue-600 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2">
-                <Heart size={14} className="fill-blue-400 text-blue-400" /> Do Noivo
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {groomGodparents.length > 0 ? groomGodparents.map(gp => (
-                  <div key={gp.id} className="bg-white px-4 py-2 rounded-full border-[0.5px] border-blue-200 shadow-sm flex items-center gap-2">
-                    <Star size={12} className="text-wedding-gold fill-wedding-gold" />
-                    <span className="text-sm font-bold text-slate-700">{gp.name}</span>
-                  </div>
-                )) : (
-                  <p className="text-slate-300 text-xs italic">Nenhum padrinho definido.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showAddForm && (
         <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-wedding-gold/10 animate-fadeIn ring-4 ring-wedding-nude overflow-hidden">
@@ -394,7 +354,7 @@ const GuestList: React.FC = () => {
                           isGodparent ? 'bg-wedding-gold text-white border-wedding-gold shadow-lg' : 'bg-slate-50 border-transparent text-slate-400'
                         )}
                       >
-                        {isGodparent ? <Star size={18} className="fill-white" /> : <Star size={18} />}
+                        {isGodparent ? <Award size={18} className="fill-white" /> : <Award size={18} />}
                         {isGodparent ? 'Sim!' : 'Não'}
                       </button>
                     </div>
@@ -564,7 +524,7 @@ const GuestList: React.FC = () => {
                   {guest.name.charAt(0)}
                   {guest.isGodparent && (
                     <div className="absolute -top-1 -right-1 w-6 h-6 bg-wedding-gold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                      <Star size={10} className="text-white fill-white" />
+                      <Award size={10} className="text-white fill-white" />
                     </div>
                   )}
                 </div>
@@ -582,7 +542,7 @@ const GuestList: React.FC = () => {
                       )}
                       title={guest.isGodparent ? "Remover título de padrinho" : "Marcar como padrinho"}
                     >
-                      <Star size={16} className={guest.isGodparent ? 'fill-wedding-gold' : ''} />
+                      <Award size={16} className={guest.isGodparent ? 'fill-wedding-gold' : ''} />
                     </button>
                   </h4>
                   <div className="flex items-center gap-3">
@@ -685,9 +645,54 @@ const GuestList: React.FC = () => {
         </div>
       )}
 
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fadeIn" onClick={() => !isDeletingBulk && setShowBulkDeleteConfirm(false)} />
+          <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full max-w-md relative z-10 shadow-2xl border border-white animate-scaleUp">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-100 flex-shrink-0">
+              <Trash2 size={32} className="text-red-500" />
+            </div>
+
+            <div className="text-center space-y-3 mb-8">
+              <h3 className="text-2xl font-serif font-bold text-slate-800">Excluir Convidados?</h3>
+              <p className="text-slate-500 leading-relaxed">
+                Você está prestes a excluir <span className="font-bold text-red-500">{selectedGuests.length}</span> convidados selecionados. Esta ação não pode ser desfeita.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                disabled={isDeletingBulk}
+                className="py-4 rounded-2xl font-bold bg-slate-50 text-slate-400 hover:bg-slate-100 transition-all disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmBulkDelete}
+                disabled={isDeletingBulk}
+                className="py-4 rounded-2xl font-bold bg-red-500 text-white shadow-lg shadow-red-200 hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isDeletingBulk ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Trash2 size={18} />
+                    Excluir
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-scaleUp { animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       `}</style>
     </div>
   );

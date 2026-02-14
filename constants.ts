@@ -61,5 +61,6 @@ export const DEFAULT_WEDDING_DATA: WeddingData = {
   guests: [],
   coupleItems: INITIAL_COUPLE_ITEMS,
   songs: [],
+  gifts: [],
   onboarded: false,
 };

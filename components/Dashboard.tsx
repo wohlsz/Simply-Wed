@@ -73,14 +73,25 @@ const Dashboard: React.FC = () => {
     };
   }, [data.budgetItems, data.budget]);
 
-  const pieData = [
-    { name: 'Gasto', value: totalSpent },
-    { name: 'Restante', value: Math.max(0, data.budget - totalSpent) },
-  ];
+  const categoryData = useMemo(() => {
+    const categories: Record<string, number> = {};
+    data.budgetItems.forEach(item => {
+      if (item.spent > 0) {
+        categories[item.category] = (categories[item.category] || 0) + item.spent;
+      }
+    });
 
-  const COLORS = ['#C5A059', '#F3F0E9'];
+    const chartData = Object.entries(categories).map(([name, value]) => ({ name, value }));
 
-  const [showFullDate, setShowFullDate] = React.useState(false);
+    // If no spending, show a placeholder
+    if (chartData.length === 0) {
+      return [{ name: 'Sem gastos', value: 1 }];
+    }
+
+    return chartData.sort((a, b) => b.value - a.value);
+  }, [data.budgetItems]);
+
+  const CATEGORY_COLORS = ['#C5A059', '#E5D5B7', '#A38A5E', '#D4AF37', '#8B7355', '#C0C0C0'];
 
   return (
     <div className="space-y-8 pb-12">
@@ -165,15 +176,16 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.budgetItems}>
+              <BarChart data={categoryData.filter(d => d.name !== 'Sem gastos')}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis hide />
                 <Tooltip
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Gasto']}
                 />
-                <Bar dataKey="spent" fill="#C5A059" radius={[4, 4, 0, 0]} barSize={32} />
+                <Bar dataKey="value" fill="#C5A059" radius={[4, 4, 0, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -181,12 +193,12 @@ const Dashboard: React.FC = () => {
 
         {/* Task Progress Pie */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
-          <h3 className="text-xl font-serif font-bold text-slate-800 mb-6 text-center">Visão Geral Budget</h3>
+          <h3 className="text-xl font-serif font-bold text-slate-800 mb-6 text-center">Distribuição de Gastos</h3>
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={categoryData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -194,17 +206,34 @@ const Dashboard: React.FC = () => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: number, name: string) => [`R$ ${value.toLocaleString('pt-BR')}`, name]}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 text-center">
-            <p className="text-3xl font-bold text-slate-800">{budgetProgress}%</p>
-            <p className="text-sm text-slate-400">do orçamento utilizado</p>
+          <div className="mt-4 w-full h-[150px] overflow-y-auto custom-scrollbar pr-2">
+            {categoryData.length > 0 && categoryData[0].name !== 'Sem gastos' ? (
+              <div className="space-y-2">
+                {categoryData.map((item, index) => (
+                  <div key={item.name} className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }} />
+                      <span className="text-slate-600 font-medium truncate max-w-[100px]">{item.name}</span>
+                    </div>
+                    <span className="text-slate-400 font-bold">
+                      {totalSpent > 0 ? Math.round((item.value / totalSpent) * 100) : 0}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-slate-400 text-sm mt-8">Nenhum gasto registrado</div>
+            )}
           </div>
         </div>
       </div>

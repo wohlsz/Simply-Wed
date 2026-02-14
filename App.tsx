@@ -11,6 +11,7 @@ import GuestList from './components/GuestList';
 import BudgetTracker from './components/BudgetTracker';
 import CoupleArea from './components/CoupleArea';
 import MusicPlanner from './components/MusicPlanner';
+import GiftList from './components/GiftList';
 import LoginPage from './components/LoginPage';
 import FeedbackPage from './components/FeedbackPage';
 import FeedbackFooter from './components/FeedbackFooter';
@@ -68,7 +69,9 @@ const App: React.FC = () => {
                       </div>
                     } />
                     <Route path="/couple" element={<CoupleArea />} />
+                    <Route path="/couple" element={<CoupleArea />} />
                     <Route path="/music" element={<MusicPlanner />} />
+                    <Route path="/gifts" element={<GiftList />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </Layout>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Guest } from '../types';
-import { Star, Plus, Heart, Sparkles, Trash2, X, Search, Check } from 'lucide-react';
+import { Award, Plus, Heart, Sparkles, Trash2, X, Search, Check } from 'lucide-react';
 
 interface Props {
   guests: Guest[];
@@ -201,7 +201,7 @@ const GodparentCard: React.FC<{ godparent: Guest, onRemove: () => void, sideColo
       <div>
         <p className="font-bold text-lg text-slate-800">{godparent.name}</p>
         <div className="flex items-center gap-2">
-          <Star size={12} className="text-wedding-gold fill-wedding-gold" />
+          <Award size={12} className="text-wedding-gold fill-wedding-gold" />
           <span className="text-[10px] font-bold text-wedding-gold uppercase tracking-widest">Padrinho Oficial</span>
         </div>
       </div>

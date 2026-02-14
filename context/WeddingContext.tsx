@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { WeddingData, Guest, CoupleItems, MusicSong, WeddingTask, BudgetItem } from '../types';
+import { WeddingData, Guest, CoupleItems, MusicSong, WeddingTask, BudgetItem, Gift } from '../types';
 import { DEFAULT_WEDDING_DATA } from '../constants';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -24,6 +23,8 @@ interface WeddingContextType {
   updateCoupleItems: (items: CoupleItems) => Promise<void>;
   addSong: (song: MusicSong) => Promise<void>;
   removeSong: (songId: string) => Promise<void>;
+  addGift: (gift: Gift) => Promise<void>;
+  removeGift: (giftId: string) => Promise<void>;
   createWedding: (data: Partial<WeddingData>) => Promise<void>;
   updateWedding: (updates: Partial<WeddingData>) => Promise<void>;
 }
@@ -33,7 +34,7 @@ const WeddingContext = createContext<WeddingContextType | undefined>(undefined);
 export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [weddingData, setWeddingData] = useState<WeddingData>(DEFAULT_WEDDING_DATA);
-  const [loadingData, setLoadingData] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [weddingId, setWeddingId] = useState<string | null>(null);
 
   const refreshData = useCallback(async () => {
@@ -58,17 +59,18 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (weddings) {
         setWeddingId(weddings.id);
 
-        // Fetch related data in parallel
         const [
           { data: guests },
           { data: tasks },
           { data: budgetItems },
-          { data: songs }
+          { data: songs },
+          { data: gifts }
         ] = await Promise.all([
           supabase.from('guests').select('*').eq('wedding_id', weddings.id),
           supabase.from('tasks').select('*').eq('wedding_id', weddings.id),
-          supabase.from('budget_items').select('*').eq('wedding_id', weddings.id),
-          supabase.from('songs').select('*').eq('wedding_id', weddings.id)
+          supabase.from('budget_items').select('*').eq('wedding_id', weddings.id).order('id', { ascending: false }),
+          supabase.from('songs').select('*').eq('wedding_id', weddings.id),
+          supabase.from('gifts').select('*').eq('wedding_id', weddings.id)
         ]);
 
         // Normalize data to match app state structure
@@ -87,10 +89,20 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
           categories: DEFAULT_WEDDING_DATA.categories, // Static for now, or fetch if dynamic
           tasks: normalizedTasks,
           guests: (guests || []).map(g => ({ ...g, rsvpStatus: g.rsvp_status, isGodparent: g.is_godparent, plusOnes: g.plus_ones })),
-          budgetItems: budgetItems || DEFAULT_WEDDING_DATA.budgetItems,
+          budgetItems: (budgetItems || []).map((item: any) => {
+            // Se o campo category contém o delimitador, separamos
+            if (item.category && item.category.includes(' ::: ')) {
+              const [cat, desc] = item.category.split(' ::: ');
+              return { ...item, category: cat, description: desc };
+            }
+            // Caso contrário, mantemos como está (retrocompatibilidade)
+            return { ...item, description: item.description || item.category };
+          }),
           vendors: DEFAULT_WEDDING_DATA.vendors, // Not in DB yet
           coupleItems: typeof weddings.couple_items === 'string' ? JSON.parse(weddings.couple_items as string) : (weddings.couple_items || DEFAULT_WEDDING_DATA.coupleItems),
           songs: songs || [],
+          gifts: (gifts || []).map(g => ({ ...g, imageUrl: g.image_url })),
+          giftPhone: weddings.gift_phone,
         });
       } else {
         // No wedding found, user needs to onboarding
@@ -139,6 +151,7 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (updates.weddingDate !== undefined) dbUpdates.wedding_date = updates.weddingDate;
     if (updates.budget !== undefined) dbUpdates.budget = updates.budget;
     if (updates.guestCount !== undefined) dbUpdates.guest_count = updates.guestCount;
+    if (updates.giftPhone !== undefined) dbUpdates.gift_phone = updates.giftPhone;
 
     if (Object.keys(dbUpdates).length > 0) {
       const { error } = await supabase
@@ -302,7 +315,15 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }));
     if (weddingId) {
       const dbUpdates: any = {};
-      if (updates.category) dbUpdates.category = updates.category;
+
+      // Se estamos atualizando spent ou description/category, precisamos lidar com o merge
+      if (updates.category || updates.description) {
+        const currentItem = weddingData.budgetItems.find(b => b.id === budgetId);
+        const newCat = updates.category || currentItem?.category || '';
+        const newDesc = updates.description !== undefined ? updates.description : (currentItem?.description || '');
+        dbUpdates.category = `${newCat} ::: ${newDesc} `;
+      }
+
       if (updates.planned !== undefined) dbUpdates.planned = updates.planned;
       if (updates.spent !== undefined) dbUpdates.spent = updates.spent;
 
@@ -317,14 +338,21 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }));
 
     if (weddingId) {
-      const { data: newItem } = await supabase.from('budget_items').insert({
+      // Salvamos concatenado para evitar erros caso a coluna 'description' não exista no banco
+      const dbCategory = item.description
+        ? `${item.category} ::: ${item.description} `
+        : item.category;
+
+      const { data: newItem, error } = await supabase.from('budget_items').insert({
         wedding_id: weddingId,
-        category: item.category,
+        category: dbCategory,
         planned: item.planned,
         spent: item.spent
       }).select().single();
 
-      if (newItem) {
+      if (error) {
+        console.error('Critical error saving budget item:', error);
+      } else if (newItem) {
         setWeddingData(prev => ({
           ...prev,
           budgetItems: prev.budgetItems.map(b => b.id === item.id ? { ...b, id: newItem.id } : b)
@@ -377,6 +405,34 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const addGift = async (gift: Gift) => {
+    setWeddingData(prev => ({ ...prev, gifts: [gift, ...prev.gifts] }));
+    if (weddingId) {
+      const { data: newGift } = await supabase.from('gifts').insert({
+        wedding_id: weddingId,
+        name: gift.name,
+        description: gift.description,
+        price: gift.price,
+        image_url: gift.imageUrl,
+        status: gift.status
+      }).select().single();
+
+      if (newGift) {
+        setWeddingData(prev => ({
+          ...prev,
+          gifts: prev.gifts.map(g => g.id === gift.id ? { ...g, id: newGift.id } : g)
+        }));
+      }
+    }
+  };
+
+  const removeGift = async (giftId: string) => {
+    setWeddingData(prev => ({ ...prev, gifts: prev.gifts.filter(g => g.id !== giftId) }));
+    if (weddingId) {
+      await supabase.from('gifts').delete().eq('id', giftId);
+    }
+  };
+
   return (
     <WeddingContext.Provider value={{
       weddingData,
@@ -397,6 +453,8 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
       updateCoupleItems,
       addSong,
       removeSong,
+      addGift,
+      removeGift,
       createWedding,
       updateWedding
     }}>

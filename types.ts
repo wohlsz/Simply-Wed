@@ -20,6 +20,7 @@ export interface WeddingTask {
 export interface BudgetItem {
   id: string;
   category: string;
+  description?: string;
   planned: number;
   spent: number;
 }
@@ -63,6 +64,15 @@ export interface MusicSong {
   moment: string; // Ex: Cerimônia, Festa, Primeira Dança
 }
 
+export interface Gift {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  imageUrl?: string;
+  status: 'available' | 'reserved' | 'received';
+}
+
 export interface WeddingData {
   coupleName: string;
   weddingDate: string;
@@ -76,5 +86,7 @@ export interface WeddingData {
   guests: Guest[];
   coupleItems: CoupleItems;
   songs: MusicSong[];
+  gifts: Gift[];
+  giftPhone?: string;
   onboarded: boolean;
 }

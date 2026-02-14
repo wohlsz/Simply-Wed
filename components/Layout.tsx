@@ -11,7 +11,8 @@ import {
   Menu,
   Heart,
   Music,
-  MessageCircle
+  MessageCircle,
+  Gift
 } from 'lucide-react';
 
 interface Props {
@@ -31,6 +32,7 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
     { id: 'guests', label: 'Convidados', path: '/dashboard/guests', icon: <Users size={20} /> },
     { id: 'noivos', label: 'Noivos', path: '/dashboard/couple', icon: <UserCircle size={20} /> },
     { id: 'musicas', label: 'Músicas', path: '/dashboard/music', icon: <Music size={20} /> },
+    { id: 'gifts', label: 'Lista de presentes', path: '/dashboard/gifts', icon: <Gift size={20} /> },
   ];
 
   const { pathname } = useLocation();

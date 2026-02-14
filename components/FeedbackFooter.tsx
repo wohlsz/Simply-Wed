@@ -11,7 +11,7 @@ const FeedbackFooter: React.FC = () => {
     if (location.pathname === '/feedback') return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 p-4 lg:p-8 bg-gradient-to-t from-wedding-nude/90 via-wedding-nude/40 to-transparent pointer-events-none z-[60]">
+        <div className="fixed bottom-0 left-0 right-0 p-4 lg:p-8 bg-gradient-to-t from-wedding-nude/90 via-wedding-nude/40 to-transparent pointer-events-none z-10">
             <div className="max-w-7xl mx-auto flex justify-center lg:justify-end pointer-events-auto">
                 <div
                     key={location.pathname}
