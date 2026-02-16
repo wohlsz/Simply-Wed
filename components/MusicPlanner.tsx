@@ -303,19 +303,19 @@ const MusicPlanner: React.FC = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-400 font-bold">
-                <th className="px-8 py-4">#</th>
-                <th className="px-8 py-4">Música / Artista</th>
-                <th className="px-8 py-4">Momento</th>
-                <th className="px-8 py-4 text-center">Ações</th>
+                <th className="px-4 sm:px-8 py-4">#</th>
+                <th className="px-4 sm:px-8 py-4">Música / Artista</th>
+                <th className="px-4 sm:px-8 py-4">Momento</th>
+                <th className="px-4 sm:px-8 py-4 text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filteredSongs.length > 0 ? filteredSongs.map((song, index) => (
                 <tr key={song.id} className="group hover:bg-wedding-nude/30 transition-all animate-fadeIn">
-                  <td className="px-8 py-6 text-slate-300 font-bold">{index + 1}</td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 relative group/thumb flex items-center justify-center">
+                  <td className="px-4 sm:px-8 py-6 text-slate-300 font-bold text-sm sm:text-base">{index + 1}</td>
+                  <td className="px-4 sm:px-8 py-6">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 relative group/thumb flex items-center justify-center">
                         {song.youtubeId ? (
                           <>
                             <img
@@ -329,34 +329,34 @@ const MusicPlanner: React.FC = () => {
                           </>
                         ) : (
                           <div className="w-full h-full bg-slate-50 text-slate-300 flex items-center justify-center">
-                            <Music2 size={24} />
+                            <Music2 size={20} className="sm:size-24" />
                           </div>
                         )}
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-800">{song.title}</p>
-                        {song.youtubeId && <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Youtube ID: {song.youtubeId}</p>}
-                        {!song.url && <p className="text-[10px] text-slate-300 italic">Sem link de referência</p>}
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 text-sm sm:text-base truncate">{song.title}</p>
+                        {song.youtubeId && <p className="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-tighter truncate">Youtube ID: {song.youtubeId}</p>}
+                        {!song.url && <p className="text-[9px] sm:text-[10px] text-slate-300 italic">Sem link de referência</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <span className="bg-wedding-nude text-wedding-gold px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-wedding-gold/10">
+                  <td className="px-4 sm:px-8 py-6">
+                    <span className="bg-wedding-nude text-wedding-gold px-2 py-1 sm:px-3 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border border-wedding-gold/10 whitespace-nowrap">
                       {song.moment}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
-                    <div className="grid grid-cols-2 gap-2 w-24 mx-auto items-center">
+                  <td className="px-4 sm:px-8 py-6">
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2 w-16 sm:w-24 mx-auto items-center">
                       <div className="flex justify-center">
                         {song.url ? (
                           <a
                             href={song.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            className="p-1.5 sm:p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                             title="Ver no YouTube"
                           >
-                            <ExternalLink size={20} />
+                            <ExternalLink size={18} className="sm:w-5 sm:h-5" />
                           </a>
                         ) : (
                           <div className="w-10 h-10" />
@@ -383,10 +383,10 @@ const MusicPlanner: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => setConfirmDeleteId(song.id)}
-                            className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            className="p-1.5 sm:p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                             title="Remover"
                           >
-                            <Trash2 size={20} />
+                            <Trash2 size={18} className="sm:w-5 sm:h-5" />
                           </button>
                         )}
                       </div>

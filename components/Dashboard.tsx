@@ -115,13 +115,13 @@ const Dashboard: React.FC = () => {
               <Heart size={10} className="fill-wedding-gold" />
               Sua Jornada até o Sim
             </div>
-            <div className="flex items-center justify-center md:justify-start gap-4">
-              <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-800 leading-tight">
+            <div className="flex items-center justify-center md:justify-start gap-4 relative">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-slate-800 leading-tight">
                 Olá, {data.coupleName || 'Noivos'}!
               </h1>
               <button
                 onClick={handleOpenNameEdit}
-                className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-wedding-gold hover:bg-wedding-gold/10 transition-all opacity-0 group-hover:opacity-100"
+                className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:text-wedding-gold hover:bg-wedding-gold/10 transition-all opacity-0 group-hover:opacity-100 md:relative absolute -right-12"
               >
                 <Edit2 size={18} />
               </button>

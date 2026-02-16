@@ -619,10 +619,12 @@ const GiftList: React.FC = () => {
                                 <div key={gift.id} className="bg-slate-50/50 rounded-[1.5rem] border border-slate-100 overflow-hidden group transition-all flex items-center p-3 gap-5 grayscale-[0.5] hover:grayscale-0">
                                     <button
                                         onClick={() => toggleGiftStatus(gift)}
-                                        className="p-2 text-green-500 hover:text-slate-300 transition-colors"
+                                        className="shrink-0 active:scale-90 transition-transform p-2"
                                         title="Desmarcar como recebido"
                                     >
-                                        <CheckCircle size={24} className="fill-green-500 text-white" />
+                                        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm transition-all animate-popIn">
+                                            <Check size={18} strokeWidth={3} />
+                                        </div>
                                     </button>
 
                                     <div className="w-16 h-16 flex-shrink-0 bg-white rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center relative">
@@ -634,12 +636,14 @@ const GiftList: React.FC = () => {
                                     </div>
 
                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-lg text-slate-700 line-through">{gift.name}</h3>
-                                            <span className="bg-green-100 text-green-600 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Recebido</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-slate-400">
-                                            <span>R$ {gift.price.toLocaleString('pt-BR')}</span>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-semibold text-lg text-slate-300 line-through transition-all leading-tight">{gift.name}</h3>
+                                                <span className="bg-green-100 text-green-600 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Recebido</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-[10px] font-bold text-slate-300 tracking-wider">R$ {gift.price.toLocaleString('pt-BR')}</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -706,8 +710,10 @@ const GiftList: React.FC = () => {
             <style>{`
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         .animate-scaleUp { animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-popIn { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       `}</style>
         </div>
     );

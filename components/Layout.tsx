@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -23,7 +23,17 @@ interface Props {
 
 const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const scrollToTop = (e: React.MouseEvent) => {
+    // If already on dashboard, just scroll. If not, navigate then scroll.
+    if (pathname === '/dashboard') {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setIsSidebarOpen(false);
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -39,6 +49,13 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
   const activeIndex = menuItems.findIndex(item =>
     item.path === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.path)
   );
+
+  // Reset scroll on every route change
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-wedding-nude flex">
@@ -56,7 +73,11 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-8 h-full flex flex-col">
-          <NavLink to="/dashboard" className="flex items-center gap-2 mb-12 hover:opacity-80 transition-opacity">
+          <NavLink
+            to="/dashboard"
+            onClick={scrollToTop}
+            className="flex items-center gap-2 mb-12 hover:opacity-80 transition-opacity"
+          >
             <Heart className="text-wedding-gold fill-wedding-gold" size={24} />
             <span className="text-2xl font-serif font-bold text-slate-800">Simples Wed</span>
           </NavLink>
@@ -114,17 +135,25 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Mobile Header with Centered Logo */}
-        <header className="bg-white border-b border-slate-100 p-4 lg:hidden relative flex items-center justify-center min-h-[64px]">
-          <div className="flex items-center gap-2">
+        <header className="bg-white border-b border-slate-100 p-4 lg:hidden relative flex items-center justify-between min-h-[64px]">
+          <div className="w-10"></div> {/* Spacer to balance menu button */}
+          <NavLink
+            to="/dashboard"
+            onClick={scrollToTop}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <Heart className="text-wedding-gold fill-wedding-gold" size={20} />
             <span className="text-xl font-serif font-bold text-slate-800">Simples Wed</span>
-          </div>
-          <button onClick={() => setIsSidebarOpen(true)} className="absolute right-4 p-2 text-slate-600 hover:text-wedding-gold transition-colors">
+          </NavLink>
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 hover:text-wedding-gold transition-colors">
             <Menu size={24} />
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-10 relative pb-32">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto p-4 lg:p-10 relative pb-32"
+        >
           {children}
         </div>
       </main>

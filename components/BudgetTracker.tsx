@@ -215,61 +215,61 @@ const BudgetTracker: React.FC = () => {
         <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
-              <th className="p-8 font-bold">Serviço / Item</th>
-              <th className="p-8 font-bold">Categoria</th>
-              <th className="p-8 font-bold text-center">Valor Gasto (R$)</th>
-              <th className="p-8 font-bold text-center">Ações</th>
+              <th className="p-4 sm:p-5 font-bold">Serviço / Item</th>
+              <th className="p-4 sm:p-5 font-bold">Categoria</th>
+              <th className="p-4 sm:p-5 font-bold text-center">Valor Gasto (R$)</th>
+              <th className="p-4 sm:p-5 font-bold text-center">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {budgetItems.length > 0 ? budgetItems.map(item => (
               <tr key={item.id} className="hover:bg-wedding-nude/30 transition-colors group">
-                <td className="p-8">
-                  <p className="font-bold text-slate-800 text-lg">{item.description || item.category}</p>
+                <td className="p-4 sm:p-5">
+                  <p className="font-bold text-slate-800 text-base sm:text-lg">{item.description || item.category}</p>
                 </td>
-                <td className="p-8">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    <Tag size={12} />
+                <td className="p-4 sm:p-5">
+                  <div className="inline-flex items-center gap-1 sm:gap-2 px-2 py-0.5 sm:px-3 sm:py-1 bg-slate-100 text-slate-500 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                    <Tag size={10} className="sm:w-3 sm:h-3" />
                     {item.category}
                   </div>
                 </td>
-                <td className="p-8">
-                  <div className="relative max-w-[200px] mx-auto">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">R$</span>
+                <td className="p-4 sm:p-5">
+                  <div className="relative w-full max-w-[140px] sm:max-w-[200px] mx-auto">
+                    <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold text-xs sm:text-base">R$</span>
                     <input
                       type="text"
                       inputMode="numeric"
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-transparent rounded-xl text-lg font-bold text-slate-700 focus:bg-white focus:border-wedding-gold outline-none transition-all"
+                      className="w-full pl-9 sm:pl-12 pr-2 sm:pr-4 py-2 sm:py-3 bg-slate-50 border border-transparent rounded-xl text-sm sm:text-lg font-bold text-slate-700 focus:bg-white focus:border-wedding-gold outline-none transition-all"
                       value={formatCurrency(item.spent || 0)}
                       onChange={(e) => updateSpentValue(item.id, e.target.value)}
                     />
                   </div>
                 </td>
-                <td className="p-8 text-center">
+                <td className="p-4 sm:p-5 text-center">
                   <div className="flex justify-center">
                     {confirmDeleteId === item.id ? (
                       <div className="flex items-center gap-1 animate-fadeIn bg-red-50 p-1 rounded-xl border border-red-100">
                         <button
                           onClick={() => performDelete(item.id)}
-                          className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 shadow-md flex items-center gap-1"
+                          className="bg-red-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold hover:bg-red-600 shadow-md flex items-center gap-1"
                         >
-                          <Check size={12} strokeWidth={3} />
-                          Confirmar
+                          <Check size={10} strokeWidth={3} className="sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">Confirmar</span>
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
                           className="text-slate-400 p-1.5 hover:text-slate-600"
                         >
-                          <X size={16} />
+                          <X size={14} className="sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(item.id)}
-                        className="p-3 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 sm:p-3 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         title="Excluir categoria"
                       >
-                        <Trash2 size={20} />
+                        <Trash2 size={18} className="sm:w-5 sm:h-5" />
                       </button>
                     )}
                   </div>
