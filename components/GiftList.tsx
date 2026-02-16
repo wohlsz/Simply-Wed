@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useWedding } from '../context/WeddingContext';
 import { Gift } from '../types';
-import { Gift as GiftIcon, Plus, Trash2, Search, Image as ImageIcon, Download, ExternalLink, RefreshCw, Smartphone, ShoppingBag, MessageCircle } from 'lucide-react';
+import { Gift as GiftIcon, Plus, Trash2, Search, Image as ImageIcon, Download, ExternalLink, RefreshCw, Smartphone, ShoppingBag, MessageCircle, CheckCircle, Circle, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import clsx from 'clsx';
 
 const GiftList: React.FC = () => {
-    const { weddingData, addGift, removeGift, updateWedding } = useWedding();
+    const { weddingData, addGift, removeGift, updateGift, updateWedding } = useWedding();
     const gifts = weddingData.gifts || [];
+
+    const availableGifts = gifts.filter(g => g.status !== 'received');
+    const receivedGifts = gifts.filter(g => g.status === 'received');
 
     const [isAdding, setIsAdding] = useState(false);
     const [newGift, setNewGift] = useState<Partial<Gift>>({
@@ -22,12 +25,8 @@ const GiftList: React.FC = () => {
     const [tempPhone, setTempPhone] = useState('');
 
     // Verificar se precisa configurar telefone
-    React.useEffect(() => {
-        if (!weddingData.giftPhone && gifts.length > 0) {
-            // Se já tem presentes mas não tem telefone, sugere configurar
-            setShowPhoneModal(true);
-        }
-    }, [weddingData.giftPhone, gifts.length]);
+    // Removido useEffect que abria modal, agora usamos renderização condicional direta
+
 
     // Máscara de Telefone
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +89,11 @@ const GiftList: React.FC = () => {
         setIsAdding(false);
     };
 
+    const toggleGiftStatus = async (gift: Gift) => {
+        const newStatus = gift.status === 'received' ? 'available' : 'received';
+        await updateGift(gift.id, { status: newStatus });
+    };
+
     const generatePDF = () => {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -146,7 +150,7 @@ const GiftList: React.FC = () => {
                 doc.setTextColor(150, 150, 150);
                 doc.setFont('helvetica', 'bold');
                 // Rotacionar texto no centro
-                doc.text('Simply Wed', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
+                doc.text('Simples Wed', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
                 ctx.restoreGraphicsState();
             }
 
@@ -280,7 +284,7 @@ const GiftList: React.FC = () => {
         // Rodapé em todas as páginas
         const pageCount = doc.getNumberOfPages();
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setTextColor(150);
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -292,37 +296,80 @@ const GiftList: React.FC = () => {
         doc.save(filename);
     };
 
-    const totalValue = gifts.reduce((acc, curr) => acc + curr.price, 0);
+    const totalValue = availableGifts.reduce((acc, curr) => acc + curr.price, 0);
+    const receivedValue = receivedGifts.reduce((acc, curr) => acc + curr.price, 0);
+
+    if (!weddingData.giftPhone) {
+        return (
+            <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+                <header className="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h1 className="text-4xl font-serif font-bold text-slate-800">Sua Lista de Presentes</h1>
+                        <p className="text-slate-500 mt-1">Configure como seus convidados irão te presentear.</p>
+                    </div>
+                </header>
+
+                <div className="bg-white p-12 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center text-center max-w-2xl mx-auto mt-12">
+                    <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-6">
+                        <Smartphone size={40} />
+                    </div>
+                    <h2 className="text-3xl font-serif font-bold text-slate-800 mb-4">Configurar WhatsApp</h2>
+                    <p className="text-slate-500 mb-8 text-lg">
+                        Para começar sua lista, precisamos do número de WhatsApp que receberá as mensagens dos convidados interessados em te presentear.
+                    </p>
+
+                    <form onSubmit={handleSavePhone} className="w-full space-y-4">
+                        <div className="space-y-2 text-left">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Número do WhatsApp (com DDD)</label>
+                            <input
+                                autoFocus
+                                type="tel"
+                                required
+                                placeholder="Ex: (11) 99999-9999"
+                                className="w-full px-6 py-4 rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 focus:bg-white text-xl transition-all"
+                                value={tempPhone}
+                                onChange={handlePhoneChange}
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            className="w-full bg-green-600 text-white py-5 rounded-2xl text-xl font-bold hover:bg-green-700 transition-all shadow-xl shadow-green-600/20 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            Confirmar e Começar Minha Lista
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-8 pb-20 max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fadeIn">
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-4xl font-serif font-bold text-slate-800">Lista de Presentes</h1>
                     <p className="text-slate-500 mt-1">Organize sua lista de desejos e compartilhe com os convidados.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={generatePDF}
-                        className="px-6 py-3 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all font-bold flex items-center gap-2"
+                        className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm"
                         title="Baixar lista em PDF"
                     >
-                        <Download size={20} /> PDF
+                        <Download size={20} />
+                        <span className="hidden sm:inline">PDF</span>
                     </button>
 
-                    {/* Botão Configurar/Alterar WhatsApp */}
                     <button
-                        onClick={() => setShowPhoneModal(true)}
-                        className={clsx(
-                            "px-6 py-3 rounded-2xl border transition-all font-bold flex items-center gap-2",
-                            weddingData.giftPhone
-                                ? "border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                                : "border-red-200 text-red-600 bg-red-50 hover:bg-red-100 animate-pulse"
-                        )}
-                        title={weddingData.giftPhone ? "Alterar WhatsApp" : "Configurar WhatsApp"}
+                        onClick={() => {
+                            setTempPhone(weddingData.giftPhone || '');
+                            setShowPhoneModal(true);
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm"
+                        title="Configurar WhatsApp"
                     >
                         <Smartphone size={20} />
-                        {weddingData.giftPhone ? 'WhatsApp' : 'Configurar'}
+                        <span className="hidden sm:inline">WhatsApp</span>
                     </button>
 
                     <button
@@ -332,14 +379,14 @@ const GiftList: React.FC = () => {
                             isAdding ? 'bg-slate-800 text-white' : 'bg-wedding-gold text-white'
                         )}
                     >
-                        {isAdding ? <Trash2 size={20} /> : <Plus size={20} />}
+                        {isAdding ? <Plus size={20} className="rotate-45" /> : <Plus size={20} />}
                         {isAdding ? 'Cancelar' : 'Novo Presente'}
                     </button>
                 </div>
             </header>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center">
                         <GiftIcon size={24} />
@@ -351,10 +398,28 @@ const GiftList: React.FC = () => {
                 </div>
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
+                        <CheckCircle size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Itens Recebidos</p>
+                        <p className="text-2xl font-bold text-slate-800">{receivedGifts.length}</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
                         <span className="font-serif font-bold text-xl">R$</span>
                     </div>
                     <div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Valor Total</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Valor Recebido</p>
+                        <p className="text-2xl font-bold text-slate-800">R$ {receivedValue.toLocaleString('pt-BR')}</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-wedding-gold/10 text-wedding-gold flex items-center justify-center">
+                        <ShoppingBag size={24} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Valor Restante</p>
                         <p className="text-2xl font-bold text-slate-800">R$ {totalValue.toLocaleString('pt-BR')}</p>
                     </div>
                 </div>
@@ -473,64 +538,124 @@ const GiftList: React.FC = () => {
             )}
 
             {/* Lista de Presentes (Layout Lista Horizontal Simplificada) */}
-            <div className="space-y-3">
-                {gifts.length > 0 ? gifts.map(gift => (
-                    <div key={gift.id} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-md transition-all flex items-center p-3 gap-5">
+            <div className="space-y-12">
+                {/* Desejados */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3 ml-2">
+                        <div className="w-8 h-8 rounded-xl bg-wedding-gold/10 text-wedding-gold flex items-center justify-center">
+                            <ShoppingBag size={18} />
+                        </div>
+                        <h2 className="text-xl font-serif font-bold text-slate-800 tracking-wide">Lista de Desejos</h2>
+                        <span className="bg-slate-100 text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded-full">{availableGifts.length}</span>
+                    </div>
 
-                        {/* Imagem/Ícone à Esquerda (Menor) */}
-                        <div className="w-16 h-16 flex-shrink-0 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center relative group-hover:scale-105 transition-transform">
-                            {gift.imageUrl ? (
-                                <img src={gift.imageUrl} alt={gift.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <GiftIcon size={24} className="text-slate-300" />
-                            )}
+                    <div className="space-y-3">
+                        {availableGifts.length > 0 ? availableGifts.map(gift => (
+                            <div key={gift.id} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-md transition-all flex items-center p-3 gap-5">
+                                <button
+                                    onClick={() => toggleGiftStatus(gift)}
+                                    className="p-2 text-slate-300 hover:text-green-500 transition-colors"
+                                    title="Marcar como recebido"
+                                >
+                                    <Circle size={24} />
+                                </button>
+
+                                <div className="w-16 h-16 flex-shrink-0 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                                    {gift.imageUrl ? (
+                                        <img src={gift.imageUrl} alt={gift.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <GiftIcon size={24} className="text-slate-300" />
+                                    )}
+                                </div>
+
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-lg text-slate-700 truncate">{gift.name}</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                                        <span className="font-bold text-wedding-gold">R$ {gift.price.toLocaleString('pt-BR')}</span>
+                                        {gift.description && (
+                                            <>
+                                                <span className="text-slate-300">•</span>
+                                                <span className="truncate max-w-[200px] sm:max-w-md">{gift.description}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => removeGift(gift.id)}
+                                        className="text-slate-300 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-all"
+                                        title="Remover presente"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        )) : (
+                            !isAdding && (
+                                <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
+                                    <p className="text-slate-400 italic">Sua lista de desejos está limpa!</p>
+                                </div>
+                            )
+                        )}
+                    </div>
+                </div>
+
+                {/* Recebidos */}
+                {receivedGifts.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3 ml-2">
+                            <div className="w-8 h-8 rounded-xl bg-green-50 text-green-500 flex items-center justify-center">
+                                <CheckCircle size={18} />
+                            </div>
+                            <h2 className="text-xl font-serif font-bold text-slate-800 tracking-wide">Presentes Recebidos</h2>
+                            <span className="bg-green-50 text-green-500 text-[10px] font-bold px-2 py-0.5 rounded-full">{receivedGifts.length}</span>
                         </div>
 
-                        {/* Conteúdo Central */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-lg text-slate-800 truncate">{gift.name}</h3>
-                                {gift.status === 'received' && (
-                                    <span className="bg-green-100 text-green-600 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Recebido</span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                                <span className="font-bold text-wedding-gold">R$ {gift.price.toLocaleString('pt-BR')}</span>
-                                {gift.description && (
-                                    <>
-                                        <span className="text-slate-300">•</span>
-                                        <span className="truncate max-w-[200px] sm:max-w-md">{gift.description}</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                        <div className="space-y-3">
+                            {receivedGifts.map(gift => (
+                                <div key={gift.id} className="bg-slate-50/50 rounded-[1.5rem] border border-slate-100 overflow-hidden group transition-all flex items-center p-3 gap-5 grayscale-[0.5] hover:grayscale-0">
+                                    <button
+                                        onClick={() => toggleGiftStatus(gift)}
+                                        className="p-2 text-green-500 hover:text-slate-300 transition-colors"
+                                        title="Desmarcar como recebido"
+                                    >
+                                        <CheckCircle size={24} className="fill-green-500 text-white" />
+                                    </button>
 
-                        {/* Ações à Direita (Apenas Remover) */}
-                        <div className="flex items-center">
-                            <button
-                                onClick={() => removeGift(gift.id)}
-                                className="text-slate-300 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                title="Remover presente"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                                    <div className="w-16 h-16 flex-shrink-0 bg-white rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center relative">
+                                        {gift.imageUrl ? (
+                                            <img src={gift.imageUrl} alt={gift.name} className="w-full h-full object-cover opacity-60" />
+                                        ) : (
+                                            <GiftIcon size={24} className="text-slate-300" />
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-bold text-lg text-slate-700 line-through">{gift.name}</h3>
+                                            <span className="bg-green-100 text-green-600 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Recebido</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                                            <span>R$ {gift.price.toLocaleString('pt-BR')}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => removeGift(gift.id)}
+                                            className="text-slate-300 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-all"
+                                            title="Remover presente"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                )) : (
-                    !isAdding && (
-                        <div className="col-span-full py-20 text-center space-y-4">
-                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto border border-slate-100">
-                                <GiftIcon size={32} className="text-slate-300" />
-                            </div>
-                            <p className="text-slate-400 italic">Sua lista de presentes está vazia.</p>
-                            <button
-                                onClick={() => setIsAdding(true)}
-                                className="text-wedding-gold font-bold hover:underline"
-                            >
-                                Começar a adicionar
-                            </button>
-                        </div>
-                    )
                 )}
             </div>
 
@@ -539,27 +664,36 @@ const GiftList: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowPhoneModal(false)} />
                     <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md relative z-10 animate-scaleUp shadow-2xl">
+                        <button
+                            onClick={() => setShowPhoneModal(false)}
+                            className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-xl"
+                        >
+                            <Plus size={28} className="rotate-45" />
+                        </button>
                         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Smartphone size={32} />
                         </div>
                         <h3 className="text-2xl font-serif font-bold text-center text-slate-800 mb-2">Configurar WhatsApp</h3>
-                        <p className="text-center text-slate-500 mb-6">
+                        <p className="text-center text-slate-500 mb-6 font-medium">
                             Adicione o número que receberá as mensagens dos convidados interessados em presentear.
                         </p>
 
                         <form onSubmit={handleSavePhone} className="space-y-4">
-                            <input
-                                autoFocus
-                                type="tel"
-                                required
-                                placeholder="Ex: (11) 99999-9999"
-                                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:ring-2 focus:ring-green-500"
-                                value={tempPhone}
-                                onChange={handlePhoneChange}
-                            />
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Seu WhatsApp</label>
+                                <input
+                                    autoFocus
+                                    type="tel"
+                                    required
+                                    placeholder="Ex: (11) 99999-9999"
+                                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 focus:bg-white transition-all text-lg font-bold"
+                                    value={tempPhone}
+                                    onChange={handlePhoneChange}
+                                />
+                            </div>
                             <button
                                 type="submit"
-                                className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-600/20"
+                                className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 Salvar Número
                             </button>
@@ -567,6 +701,7 @@ const GiftList: React.FC = () => {
                     </div>
                 </div>
             )}
+
 
             <style>{`
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }

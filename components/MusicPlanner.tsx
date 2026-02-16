@@ -13,8 +13,10 @@ import {
   Music2,
   ListMusic,
   Search,
-  Check
+  Check,
+  Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 
 const MusicPlanner: React.FC = () => {
@@ -82,6 +84,119 @@ const MusicPlanner: React.FC = () => {
     s.moment.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const rowHeight = 15;
+    let yPos = 50;
+
+    // Título Centralizado
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(220, 38, 38); // Vermelho base (red-600) para Música
+    doc.text('Trilha Sonora', pageWidth / 2, 20, { align: 'center' });
+
+    // Subtítulo
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(weddingData.coupleName || 'Casal', pageWidth / 2, 28, { align: 'center' });
+
+    // Cabeçalho da Tabela
+    doc.setDrawColor(220, 38, 38);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 42, pageWidth - margin, 42);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(50);
+    doc.text('#', margin + 2, 47);
+    doc.text('Música / Artista', margin + 12, 47);
+    doc.text('Momento', margin + 110, 47);
+    doc.text('Link', margin + 150, 47);
+
+    doc.line(margin, 50, pageWidth - margin, 50);
+    yPos = 56; // Começar após o cabeçalho com um espaçamento maior
+
+    filteredSongs.forEach((song, index) => {
+      if (yPos + rowHeight > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin + 15;
+
+        // Watermark
+        const ctx = doc as any;
+        ctx.saveGraphicsState();
+        ctx.setGState(new ctx.GState({ opacity: 0.05 }));
+        doc.setFontSize(60);
+        doc.setTextColor(150);
+        doc.text('Simples Wed', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
+        ctx.restoreGraphicsState();
+
+        // Repetir Cabeçalho na nova página
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(50);
+        doc.text('#', margin + 2, yPos - 5);
+        doc.text('Música / Artista', margin + 12, yPos - 5);
+        doc.text('Momento', margin + 110, yPos - 5);
+        doc.text('Link', margin + 150, yPos - 5);
+        doc.line(margin, yPos - 2, pageWidth - margin, yPos - 2);
+        yPos += 5;
+      }
+
+      if (index === 0) {
+        const ctx = doc as any;
+        ctx.saveGraphicsState();
+        ctx.setGState(new ctx.GState({ opacity: 0.05 }));
+        doc.setFontSize(60);
+        doc.setTextColor(150);
+        doc.text('Simples Wed', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
+        ctx.restoreGraphicsState();
+      }
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(80);
+
+      if (index % 2 === 0) {
+        doc.setFillColor(254, 242, 242); // Vermelho clarinho sutil
+        doc.rect(margin, yPos - 7, pageWidth - (margin * 2), rowHeight, 'F');
+      }
+
+      doc.text((index + 1).toString(), margin + 2, yPos + 4);
+
+      // Título da Música (pode ser longo)
+      const titleLines = doc.splitTextToSize(song.title, 90);
+      doc.text(titleLines, margin + 12, yPos + 4);
+
+      doc.text(song.moment, margin + 110, yPos + 4);
+
+      if (song.url) {
+        doc.setTextColor(59, 130, 246);
+        doc.text('YouTube', margin + 150, yPos + 4);
+        doc.link(margin + 150, yPos - 1, 20, 7, { url: song.url });
+        doc.setTextColor(80);
+      } else {
+        doc.text('-', margin + 150, yPos + 4);
+      }
+
+      yPos += rowHeight;
+    });
+
+    // Rodapé
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(`Simples Wed • Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+    }
+
+    doc.save(`Trilha_Sonora_${weddingData.coupleName || 'Casal'}.pdf`);
+  };
+
   return (
     <div className="space-y-8 pb-20 max-w-6xl mx-auto animate-fadeIn">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -89,13 +204,23 @@ const MusicPlanner: React.FC = () => {
           <h1 className="text-4xl font-serif font-bold text-slate-800">Trilha Sonora</h1>
           <p className="text-slate-500 mt-1">Sua playlist personalizada para o grande dia.</p>
         </div>
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className={`${isAdding ? 'bg-slate-800' : 'bg-red-600'} text-white px-8 py-3 rounded-2xl shadow-lg transition-all font-bold flex items-center gap-2`}
-        >
-          {isAdding ? <X size={20} /> : <Plus size={20} />}
-          {isAdding ? 'Fechar' : 'Adicionar Música'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={generatePDF}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm"
+            title="Exportar para PDF"
+          >
+            <Download size={20} />
+            <span className="hidden sm:inline">PDF</span>
+          </button>
+          <button
+            onClick={() => setIsAdding(!isAdding)}
+            className={`${isAdding ? 'bg-slate-800' : 'bg-red-600'} text-white px-8 py-3 rounded-2xl shadow-lg transition-all font-bold flex items-center gap-2`}
+          >
+            {isAdding ? <X size={20} /> : <Plus size={20} />}
+            {isAdding ? 'Fechar' : 'Adicionar Música'}
+          </button>
+        </div>
       </header>
 
       {/* Formulário de Adição */}

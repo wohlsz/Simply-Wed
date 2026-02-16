@@ -2,8 +2,10 @@
 import React, { useState, useMemo } from 'react';
 import { useWedding } from '../context/WeddingContext';
 import { Guest } from '../types';
-import { Users, UserPlus, Search, Trash2, CheckCircle, Clock, XCircle, X, Check, Award, Heart, UserCheck, Edit2, Save } from 'lucide-react';
+import { Users, UserPlus, Search, Trash2, CheckCircle, Clock, XCircle, X, Check, Award, Heart, UserCheck, Edit2, Save, MessageCircle, Download } from 'lucide-react';
 import clsx from 'clsx';
+import jsPDF from 'jspdf';
+import GuestMessageModal from './GuestMessageModal';
 
 const GuestList: React.FC = () => {
   const { weddingData, addGuest, addGuests, updateGuest, removeGuest, removeGuests, setWeddingData } = useWedding();
@@ -32,6 +34,8 @@ const GuestList: React.FC = () => {
   const [isGodparent, setIsGodparent] = useState(false);
   const [bulkGuestList, setBulkGuestList] = useState<string[]>([]);
   const [currentBulkName, setCurrentBulkName] = useState('');
+
+  const [selectedGuestForMessage, setSelectedGuestForMessage] = useState<Guest | null>(null);
 
   const resetForm = () => {
     setSingleName('');
@@ -164,6 +168,122 @@ const GuestList: React.FC = () => {
     });
   }, [guests, searchTerm, activeFilter]);
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const rowHeight = 12;
+    let yPos = 50;
+
+    // Título Centralizado
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(197, 160, 89); // Dourado
+    doc.text('Lista de Convidados', pageWidth / 2, 20, { align: 'center' });
+
+    // Subtítulo (Nome do Casal e Total Real de Pessoas)
+    const realTotalPessoas = guests.reduce((acc, curr) => acc + 1 + curr.plusOnes, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`${weddingData.coupleName || 'Casal'} • Total adicionado: ${realTotalPessoas} pessoas`, pageWidth / 2, 28, { align: 'center' });
+
+    // Resumo de Status
+    const confirmedCount = guests.filter(g => g.rsvpStatus === 'confirmed').reduce((acc, curr) => acc + 1 + curr.plusOnes, 0);
+    const pendingCount = guests.filter(g => g.rsvpStatus === 'pending').reduce((acc, curr) => acc + 1 + curr.plusOnes, 0);
+    doc.setFontSize(10);
+    doc.text(`Confirmados: ${confirmedCount} | Pendentes: ${pendingCount}`, pageWidth / 2, 35, { align: 'center' });
+
+    // Cabeçalho da Tabela
+    doc.setDrawColor(197, 160, 89);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 42, pageWidth - margin, 42);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(50);
+    doc.text('Nome', margin + 2, 47);
+    doc.text('Tipo', margin + 80, 47);
+    doc.text('Acomp.', margin + 110, 47);
+    doc.text('Status', margin + 140, 47);
+
+    doc.line(margin, 50, pageWidth - margin, 50);
+    yPos = 56; // Começar após o cabeçalho com um espaçamento maior
+
+    filteredGuests.forEach((guest, index) => {
+      if (yPos + rowHeight > pageHeight - margin) {
+        doc.addPage();
+        yPos = margin + 15;
+
+        // Repetir Watermark em novas páginas
+        const ctx = doc as any;
+        ctx.saveGraphicsState();
+        ctx.setGState(new ctx.GState({ opacity: 0.05 }));
+        doc.setFontSize(60);
+        doc.setTextColor(150);
+        doc.text('Simples Wed', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
+        ctx.restoreGraphicsState();
+
+        // Repetir Cabeçalho na nova página se necessário (opcional, mas bom)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(50);
+        doc.text('Nome', margin + 2, yPos - 5);
+        doc.text('Tipo', margin + 80, yPos - 5);
+        doc.text('Acomp.', margin + 110, yPos - 5);
+        doc.text('Status', margin + 140, yPos - 5);
+        doc.line(margin, yPos - 2, pageWidth - margin, yPos - 2);
+        yPos += 5;
+      }
+
+      // Watermark sutil (apenas na primeira página se yPos for inicial)
+      if (index === 0) {
+        const ctx = doc as any;
+        ctx.saveGraphicsState();
+        ctx.setGState(new ctx.GState({ opacity: 0.05 }));
+        doc.setFontSize(60);
+        doc.setTextColor(150);
+        doc.text('Simples Wed', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
+        ctx.restoreGraphicsState();
+      }
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(80);
+
+      // Zebra striping sutil
+      if (index % 2 === 0) {
+        doc.setFillColor(252, 251, 247); // Nude bem clarinho
+        doc.rect(margin, yPos - 7, pageWidth - (margin * 2), rowHeight, 'F');
+      }
+
+      const statusMap: Record<string, string> = {
+        'confirmed': 'Confirmado',
+        'pending': 'Pendente',
+        'declined': 'Recusado'
+      };
+
+      doc.text(guest.name, margin + 2, yPos);
+      doc.text(guest.isGodparent ? 'Padrinho' : (guest.type === 'bride' ? 'Noiva' : 'Noivo'), margin + 80, yPos);
+      doc.text(guest.plusOnes.toString(), margin + 110, yPos);
+      doc.text(statusMap[guest.rsvpStatus] || guest.rsvpStatus, margin + 140, yPos);
+
+      yPos += rowHeight;
+    });
+
+    // Rodapé
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(`Simples Wed • Página ${i} de ${pageCount}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+    }
+
+    doc.save(`Lista_Convidados_${weddingData.coupleName || 'Casal'}.pdf`);
+  };
+
   const brideGodparents = useMemo(() => guests.filter(g => g.type === 'bride' && g.isGodparent), [guests]);
   const groomGodparents = useMemo(() => guests.filter(g => g.type === 'groom' && g.isGodparent), [guests]);
 
@@ -181,33 +301,43 @@ const GuestList: React.FC = () => {
           <h1 className="text-4xl font-serif font-bold text-slate-800">Convidados</h1>
           <p className="text-slate-500 mt-1">Gerencie sua lista completa e destaque seus padrinhos.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Meta de Convidados</span>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-serif font-bold text-slate-800">{weddingData.guestCount}</span>
-              <button
-                onClick={() => {
-                  setEditedGoal(weddingData.guestCount);
-                  setIsEditingGoal(true);
-                }}
-                className="p-2 text-slate-400 hover:text-wedding-gold hover:bg-wedding-gold/5 rounded-xl transition-all shadow-sm bg-white border border-slate-100"
-                title="Editar meta de convidados"
-              >
-                <Edit2 size={16} />
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className={clsx(
-              "px-8 py-3 rounded-2xl shadow-lg transition-all font-bold flex items-center gap-2 border-[0.5px] border-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98]",
-              showAddForm ? 'bg-slate-800 text-white' : 'bg-wedding-gold text-white'
-            )}
+            onClick={generatePDF}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm"
+            title="Exportar para PDF"
           >
-            {showAddForm ? <X size={20} /> : <UserPlus size={20} />}
-            {showAddForm ? 'Fechar Painel' : 'Novo Convidado'}
+            <Download size={20} />
+            <span className="hidden sm:inline">PDF</span>
           </button>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Meta de Convidados</span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-serif font-bold text-slate-800">{weddingData.guestCount}</span>
+                <button
+                  onClick={() => {
+                    setEditedGoal(weddingData.guestCount);
+                    setIsEditingGoal(true);
+                  }}
+                  className="p-2 text-slate-400 hover:text-wedding-gold hover:bg-wedding-gold/5 rounded-xl transition-all shadow-sm bg-white border border-slate-100"
+                  title="Editar meta de convidados"
+                >
+                  <Edit2 size={16} />
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className={clsx(
+                "px-8 py-3 rounded-2xl shadow-lg transition-all font-bold flex items-center gap-2 border-[0.5px] border-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98]",
+                showAddForm ? 'bg-slate-800 text-white' : 'bg-wedding-gold text-white'
+              )}
+            >
+              {showAddForm ? <X size={20} /> : <UserPlus size={20} />}
+              {showAddForm ? 'Fechar Painel' : 'Novo Convidado'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -564,23 +694,36 @@ const GuestList: React.FC = () => {
                   <button onClick={() => updateGuest(guest.id, { rsvpStatus: 'declined' })} className={clsx("p-2 rounded-xl transition-all", guest.rsvpStatus === 'declined' ? 'bg-red-500 text-white shadow-md border-[0.5px] border-red-400/20' : 'text-slate-400 hover:text-red-500')} title="Recusado"><XCircle size={18} /></button>
                 </div>
 
-                <div className="relative">
-                  {confirmDeleteId === guest.id ? (
-                    <div className="flex items-center gap-1 animate-fadeIn bg-red-50 p-1 rounded-xl border-[0.5px] border-red-100">
-                      <button onClick={() => performDelete(guest.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 shadow-md">
-                        Confirmar
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedGuestForMessage(guest);
+                    }}
+                    className="p-3 text-slate-300 hover:text-wedding-gold hover:bg-wedding-gold/5 rounded-xl transition-all"
+                    title="Enviar Mensagem de Convite"
+                  >
+                    <MessageCircle size={20} />
+                  </button>
+
+                  <div className="relative">
+                    {confirmDeleteId === guest.id ? (
+                      <div className="flex items-center gap-1 animate-fadeIn bg-red-50 p-1 rounded-xl border-[0.5px] border-red-100">
+                        <button onClick={() => performDelete(guest.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 shadow-md">
+                          Confirmar
+                        </button>
+                        <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 p-1.5 hover:text-slate-600"><X size={14} /></button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(guest.id)}
+                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={20} />
                       </button>
-                      <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 p-1.5 hover:text-slate-600"><X size={14} /></button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteId(guest.id)}
-                      className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -593,100 +736,113 @@ const GuestList: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </div >
 
       {/* Edit Guest Goal Modal */}
-      {isEditingGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditingGoal(false)} />
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full max-w-lg relative z-10 shadow-2xl border border-white animate-fadeIn">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-serif font-bold text-slate-800">Meta de Convidados</h3>
-              <button
-                onClick={() => setIsEditingGoal(false)}
-                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveGoal} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">CAPACIDADE TOTAL PLANEJADA</label>
-                <div className="relative">
-                  <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-wedding-gold" size={20} />
-                  <input
-                    type="number"
-                    required
-                    autoFocus
-                    className="w-full pl-16 pr-6 py-5 rounded-3xl border border-slate-100 outline-none text-2xl font-bold bg-slate-50 focus:bg-white focus:ring-4 focus:ring-wedding-gold/10 focus:border-wedding-gold/30 transition-all"
-                    value={editedGoal}
-                    onChange={(e) => setEditedGoal(Number(e.target.value))}
-                  />
-                </div>
+      {
+        isEditingGoal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditingGoal(false)} />
+            <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full max-w-lg relative z-10 shadow-2xl border border-white animate-fadeIn">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-2xl font-serif font-bold text-slate-800">Meta de Convidados</h3>
+                <button
+                  onClick={() => setIsEditingGoal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+                >
+                  <X size={24} />
+                </button>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSavingGoal}
-                className="w-full bg-wedding-gold text-white py-5 rounded-3xl text-xl font-bold shadow-xl shadow-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 mt-4"
-              >
-                {isSavingGoal ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Save size={20} />
-                    Salvar Meta
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+              <form onSubmit={handleSaveGoal} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">CAPACIDADE TOTAL PLANEJADA</label>
+                  <div className="relative">
+                    <Users className="absolute left-6 top-1/2 -translate-y-1/2 text-wedding-gold" size={20} />
+                    <input
+                      type="number"
+                      required
+                      autoFocus
+                      className="w-full pl-16 pr-6 py-5 rounded-3xl border border-slate-100 outline-none text-2xl font-bold bg-slate-50 focus:bg-white focus:ring-4 focus:ring-wedding-gold/10 focus:border-wedding-gold/30 transition-all"
+                      value={editedGoal}
+                      onChange={(e) => setEditedGoal(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
 
-      {/* Bulk Delete Confirmation Modal */}
-      {showBulkDeleteConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fadeIn" onClick={() => !isDeletingBulk && setShowBulkDeleteConfirm(false)} />
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full max-w-md relative z-10 shadow-2xl border border-white animate-scaleUp">
-            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-100 flex-shrink-0">
-              <Trash2 size={32} className="text-red-500" />
-            </div>
-
-            <div className="text-center space-y-3 mb-8">
-              <h3 className="text-2xl font-serif font-bold text-slate-800">Excluir Convidados?</h3>
-              <p className="text-slate-500 leading-relaxed">
-                Você está prestes a excluir <span className="font-bold text-red-500">{selectedGuests.length}</span> convidados selecionados. Esta ação não pode ser desfeita.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setShowBulkDeleteConfirm(false)}
-                disabled={isDeletingBulk}
-                className="py-4 rounded-2xl font-bold bg-slate-50 text-slate-400 hover:bg-slate-100 transition-all disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmBulkDelete}
-                disabled={isDeletingBulk}
-                className="py-4 rounded-2xl font-bold bg-red-500 text-white shadow-lg shadow-red-200 hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-              >
-                {isDeletingBulk ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Trash2 size={18} />
-                    Excluir
-                  </>
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={isSavingGoal}
+                  className="w-full bg-wedding-gold text-white py-5 rounded-3xl text-xl font-bold shadow-xl shadow-wedding-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 mt-4"
+                >
+                  {isSavingGoal ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Save size={20} />
+                      Salvar Meta
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {
+        showBulkDeleteConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fadeIn" onClick={() => !isDeletingBulk && setShowBulkDeleteConfirm(false)} />
+            <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full max-w-md relative z-10 shadow-2xl border border-white animate-scaleUp">
+              <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-100 flex-shrink-0">
+                <Trash2 size={32} className="text-red-500" />
+              </div>
+
+              <div className="text-center space-y-3 mb-8">
+                <h3 className="text-2xl font-serif font-bold text-slate-800">Excluir Convidados?</h3>
+                <p className="text-slate-500 leading-relaxed">
+                  Você está prestes a excluir <span className="font-bold text-red-500">{selectedGuests.length}</span> convidados selecionados. Esta ação não pode ser desfeita.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(false)}
+                  disabled={isDeletingBulk}
+                  className="py-4 rounded-2xl font-bold bg-slate-50 text-slate-400 hover:bg-slate-100 transition-all disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmBulkDelete}
+                  disabled={isDeletingBulk}
+                  className="py-4 rounded-2xl font-bold bg-red-500 text-white shadow-lg shadow-red-200 hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isDeletingBulk ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Trash2 size={18} />
+                      Excluir
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        selectedGuestForMessage && (
+          <GuestMessageModal
+            guest={selectedGuestForMessage}
+            weddingName={weddingData.coupleName || 'Os Noivos'}
+            onClose={() => setSelectedGuestForMessage(null)}
+          />
+        )
+      }
 
       <style>{`
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
@@ -694,7 +850,7 @@ const GuestList: React.FC = () => {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleUp { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       `}</style>
-    </div>
+    </div >
   );
 };
 

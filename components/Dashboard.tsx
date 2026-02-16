@@ -10,7 +10,8 @@ import {
   Edit2,
   X,
   Save,
-  Heart
+  Heart,
+  Gift
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { StatCard } from './ui/StatCard';
@@ -91,6 +92,16 @@ const Dashboard: React.FC = () => {
     return chartData.sort((a, b) => b.value - a.value);
   }, [data.budgetItems]);
 
+  const { receivedGiftsCount, pendingGiftsCount } = useMemo(() => {
+    const gifts = data.gifts || [];
+    const received = gifts.filter(g => g.status === 'received').length;
+    const pending = gifts.length - received;
+    return {
+      receivedGiftsCount: received,
+      pendingGiftsCount: pending
+    };
+  }, [data.gifts]);
+
   const CATEGORY_COLORS = ['#C5A059', '#E5D5B7', '#A38A5E', '#D4AF37', '#8B7355', '#C0C0C0'];
 
   return (
@@ -157,14 +168,14 @@ const Dashboard: React.FC = () => {
             subtext={`Confirmados: ${data.guests.filter(g => g.rsvpStatus === 'confirmed').length}`}
           />
         </NavLink>
-        <div className="block cursor-default">
+        <NavLink to="/dashboard/gifts" className="block outline-none focus:ring-2 focus:ring-wedding-gold rounded-3xl transition-transform hover:scale-[1.02] active:scale-[0.98]">
           <StatCard
-            icon={<Clock className="text-orange-500" />}
-            label="Próximo Prazo"
-            value="Contrato Local" // TODO: Implement logic to find next deadline
-            subtext="Em 3 dias"
+            icon={<Gift className="text-pink-500" />}
+            label="Lista de Presentes"
+            value={receivedGiftsCount.toString()}
+            subtext={`${receivedGiftsCount} Recebidos / ${pendingGiftsCount} Pendentes`}
           />
-        </div>
+        </NavLink>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

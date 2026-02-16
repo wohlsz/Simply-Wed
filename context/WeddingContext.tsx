@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { WeddingData, Guest, CoupleItems, MusicSong, WeddingTask, BudgetItem, Gift } from '../types';
-import { DEFAULT_WEDDING_DATA } from '../constants';
+import { DEFAULT_WEDDING_DATA, INITIAL_TASKS, INITIAL_BUDGET, INITIAL_SONGS, INITIAL_GIFTS } from '../constants';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -25,6 +25,7 @@ interface WeddingContextType {
   removeSong: (songId: string) => Promise<void>;
   addGift: (gift: Gift) => Promise<void>;
   removeGift: (giftId: string) => Promise<void>;
+  updateGift: (giftId: string, updates: Partial<Gift>) => Promise<void>;
   createWedding: (data: Partial<WeddingData>) => Promise<void>;
   updateWedding: (updates: Partial<WeddingData>) => Promise<void>;
 }
@@ -136,6 +137,46 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (error) throw error;
     if (newWedding) {
       setWeddingId(newWedding.id);
+
+      // Sementear dados iniciais
+      await Promise.all([
+        supabase.from('tasks').insert(
+          INITIAL_TASKS.map(t => ({
+            wedding_id: newWedding.id,
+            title: t.title,
+            category: t.category,
+            status: t.status,
+            subtasks: JSON.stringify(t.subtasks || [])
+          }))
+        ),
+        supabase.from('budget_items').insert(
+          INITIAL_BUDGET.map(b => ({
+            wedding_id: newWedding.id,
+            category: b.description ? `${b.category} ::: ${b.description}` : b.category,
+            planned: b.planned,
+            spent: b.spent
+          }))
+        ),
+        supabase.from('songs').insert(
+          INITIAL_SONGS.map(s => ({
+            wedding_id: newWedding.id,
+            title: s.title,
+            url: s.url,
+            moment: s.moment
+          }))
+        ),
+        supabase.from('gifts').insert(
+          INITIAL_GIFTS.map(g => ({
+            wedding_id: newWedding.id,
+            name: g.name,
+            description: g.description,
+            price: g.price,
+            image_url: g.imageUrl,
+            status: g.status
+          }))
+        )
+      ]);
+
       await refreshData();
     }
   };
@@ -428,8 +469,24 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const removeGift = async (giftId: string) => {
     setWeddingData(prev => ({ ...prev, gifts: prev.gifts.filter(g => g.id !== giftId) }));
+    if (weddingId) await supabase.from('gifts').delete().eq('id', giftId);
+  };
+
+  const updateGift = async (giftId: string, updates: Partial<Gift>) => {
+    setWeddingData(prev => ({
+      ...prev,
+      gifts: prev.gifts.map(g => g.id === giftId ? { ...g, ...updates } : g)
+    }));
+
     if (weddingId) {
-      await supabase.from('gifts').delete().eq('id', giftId);
+      const dbUpdates: any = {};
+      if (updates.name) dbUpdates.name = updates.name;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+      if (updates.price !== undefined) dbUpdates.price = updates.price;
+      if (updates.imageUrl !== undefined) dbUpdates.image_url = updates.imageUrl;
+      if (updates.status) dbUpdates.status = updates.status;
+
+      await supabase.from('gifts').update(dbUpdates).eq('id', giftId);
     }
   };
 
@@ -455,6 +512,7 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
       removeSong,
       addGift,
       removeGift,
+      updateGift,
       createWedding,
       updateWedding
     }}>
