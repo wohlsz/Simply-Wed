@@ -34,7 +34,7 @@ const LoginPage: React.FC = () => {
             if (error) {
                 setError(error.message);
             } else {
-                alert('Verifique seu email para confirmar o cadastro!');
+                navigate('/');
             }
         } else {
             const { error } = await supabase.auth.signInWithPassword({

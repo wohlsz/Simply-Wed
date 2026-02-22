@@ -73,6 +73,12 @@ export interface Gift {
   status: 'available' | 'reserved' | 'received';
 }
 
+export interface SeatingTable {
+  id: string;
+  name: string;
+  guestIds: string[];
+}
+
 export interface WeddingData {
   coupleName: string;
   weddingDate: string;
@@ -88,5 +94,6 @@ export interface WeddingData {
   songs: MusicSong[];
   gifts: Gift[];
   giftPhone?: string;
+  seatingTables: SeatingTable[];
   onboarded: boolean;
 }

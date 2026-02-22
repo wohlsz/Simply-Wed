@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ArrowRight, CheckCircle, Users, ClipboardList, DollarSign } from 'lucide-react';
+import { Heart, ArrowRight, CheckCircle, Users, ClipboardList, DollarSign, Play, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const FEATURES = [
@@ -42,6 +42,7 @@ const LandingPage: React.FC = () => {
 
   const [activeFeature, setActiveFeature] = useState(0);
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -102,10 +103,11 @@ const LandingPage: React.FC = () => {
               </span>
             </button>
             <button
-              onClick={handleStart}
+              onClick={() => setShowVideoModal(true)}
               className="bg-white border-2 border-slate-100 text-slate-600 px-10 py-5 rounded-2xl text-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-3 justify-center relative z-20"
             >
-              <span className="pointer-events-none">
+              <Play size={24} className="text-wedding-gold fill-wedding-gold" />
+              <span>
                 Ver demonstração
               </span>
             </button>
@@ -142,6 +144,46 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+
+      {/* Video Demo Modal */}
+      {showVideoModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-2xl animate-fadeIn"
+            onClick={() => setShowVideoModal(false)}
+          />
+          <div className="relative w-full max-w-5xl bg-white p-2 md:p-4 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl animate-scaleIn border border-white/50 flex flex-col gap-4">
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="absolute -top-12 right-0 md:-top-6 md:-right-16 z-20 p-3 text-white hover:scale-110 transition-all"
+            >
+              <X size={32} />
+            </button>
+            <div className="w-full aspect-video rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-black shadow-inner">
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/-ZeVE98tblw?autoplay=1"
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
+            </div>
+            <div className="px-4 pb-2">
+              <button
+                onClick={() => {
+                  setShowVideoModal(false);
+                  setShowDemoModal(true);
+                }}
+                className="w-full bg-wedding-gold text-white py-4 rounded-2xl font-bold shadow-lg shadow-wedding-gold/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 text-lg"
+              >
+                Explorar plataforma
+                <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Demo/Test Version Modal */}
       {showDemoModal && (

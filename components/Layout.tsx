@@ -12,7 +12,8 @@ import {
   Heart,
   Music,
   MessageCircle,
-  Gift
+  Gift,
+  Armchair
 } from 'lucide-react';
 
 interface Props {
@@ -43,6 +44,7 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
     { id: 'noivos', label: 'Noivos', path: '/dashboard/couple', icon: <UserCircle size={20} /> },
     { id: 'musicas', label: 'Músicas', path: '/dashboard/music', icon: <Music size={20} /> },
     { id: 'gifts', label: 'Lista de presentes', path: '/dashboard/gifts', icon: <Gift size={20} /> },
+    { id: 'seating', label: 'Mesa de Convidados', path: '/dashboard/seating', icon: <Armchair size={20} /> },
   ];
 
   const { pathname } = useLocation();
@@ -106,7 +108,7 @@ const Layout: React.FC<Props> = ({ children, coupleName, onLogout }) => {
                 `}
               >
                 {item.icon}
-                {item.label}
+                <span className="whitespace-nowrap">{item.label}</span>
               </NavLink>
             ))}
           </nav>

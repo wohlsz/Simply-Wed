@@ -1,5 +1,5 @@
 
-import { WeddingData, WeddingTask, BudgetItem, CoupleItems, MusicSong, Gift } from './types';
+import { WeddingData, WeddingTask, BudgetItem, CoupleItems, MusicSong, Gift, SeatingTable } from './types';
 
 export const INITIAL_CATEGORIES = [
   'Cerimônia',
@@ -81,6 +81,7 @@ export const DEFAULT_WEDDING_DATA: WeddingData = {
   coupleItems: INITIAL_COUPLE_ITEMS,
   songs: INITIAL_SONGS,
   gifts: INITIAL_GIFTS,
+  seatingTables: [],
   onboarded: false,
 };
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { WeddingData, Guest, CoupleItems, MusicSong, WeddingTask, BudgetItem, Gift } from '../types';
+import { WeddingData, Guest, CoupleItems, MusicSong, WeddingTask, BudgetItem, Gift, SeatingTable } from '../types';
 import { DEFAULT_WEDDING_DATA, INITIAL_TASKS, INITIAL_BUDGET, INITIAL_SONGS, INITIAL_GIFTS } from '../constants';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -26,6 +26,7 @@ interface WeddingContextType {
   addGift: (gift: Gift) => Promise<void>;
   removeGift: (giftId: string) => Promise<void>;
   updateGift: (giftId: string, updates: Partial<Gift>) => Promise<void>;
+  updateSeatingTables: (tables: SeatingTable[]) => Promise<void>;
   createWedding: (data: Partial<WeddingData>) => Promise<void>;
   updateWedding: (updates: Partial<WeddingData>) => Promise<void>;
 }
@@ -65,13 +66,15 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
           { data: tasks },
           { data: budgetItems },
           { data: songs },
-          { data: gifts }
+          { data: gifts },
+          { data: seatingTables }
         ] = await Promise.all([
           supabase.from('guests').select('*').eq('wedding_id', weddings.id),
           supabase.from('tasks').select('*').eq('wedding_id', weddings.id),
           supabase.from('budget_items').select('*').eq('wedding_id', weddings.id).order('id', { ascending: false }),
           supabase.from('songs').select('*').eq('wedding_id', weddings.id),
-          supabase.from('gifts').select('*').eq('wedding_id', weddings.id)
+          supabase.from('gifts').select('*').eq('wedding_id', weddings.id),
+          supabase.from('seating_tables').select('*').eq('wedding_id', weddings.id)
         ]);
 
         // Normalize data to match app state structure
@@ -104,6 +107,7 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
           songs: songs || [],
           gifts: (gifts || []).map(g => ({ ...g, imageUrl: g.image_url })),
           giftPhone: weddings.gift_phone,
+          seatingTables: (seatingTables || []).map((st: any) => ({ id: st.id, name: st.name, guestIds: typeof st.guest_ids === 'string' ? JSON.parse(st.guest_ids) : (st.guest_ids || []) })),
         });
       } else {
         // No wedding found, user needs to onboarding
@@ -490,6 +494,33 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const updateSeatingTables = async (tables: SeatingTable[]) => {
+    setWeddingData(prev => ({ ...prev, seatingTables: tables }));
+
+    if (weddingId) {
+      // Delete all existing seating tables for this wedding
+      await supabase.from('seating_tables').delete().eq('wedding_id', weddingId);
+
+      // Insert new ones if any
+      if (tables.length > 0) {
+        const { error } = await supabase.from('seating_tables').insert(
+          tables.map(t => ({
+            wedding_id: weddingId,
+            name: t.name,
+            guest_ids: t.guestIds
+          }))
+        );
+        if (error) {
+          console.error('Error saving seating tables:', error);
+          await refreshData();
+        } else {
+          // Refresh to get real IDs
+          await refreshData();
+        }
+      }
+    }
+  };
+
   return (
     <WeddingContext.Provider value={{
       weddingData,
@@ -513,6 +544,7 @@ export const WeddingProvider: React.FC<{ children: ReactNode }> = ({ children })
       addGift,
       removeGift,
       updateGift,
+      updateSeatingTables,
       createWedding,
       updateWedding
     }}>
