@@ -27,9 +27,26 @@ const App: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    const wantsToFeedback = window.confirm('Antes de sair, gostaria de nos contar o que achou da plataforma? Seu feedback é muito importante!');
+    if (wantsToFeedback) {
+      navigate('/feedback');
+      return;
+    }
     await signOut();
     navigate('/');
   };
+
+  React.useEffect(() => {
+    if (user) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        // Modern browsers show a generic message, but we must set returnValue
+        e.preventDefault();
+        e.returnValue = '';
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [user]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-wedding-nude">
